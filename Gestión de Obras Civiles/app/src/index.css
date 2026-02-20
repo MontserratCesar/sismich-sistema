@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (max-width: 1024px) {
+  /* Botones más grandes para dedos */
+  button, 
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Espaciado mayor en formularios móviles */
+  input, select, textarea {
+    font-size: 16px; /* Evita zoom en iOS */
+    padding: 12px;
+  }
+}
 @layer base {
   :root {
     --background: 0 0% 100%;
