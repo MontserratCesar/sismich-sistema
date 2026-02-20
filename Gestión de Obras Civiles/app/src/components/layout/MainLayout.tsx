@@ -135,7 +135,7 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
             <Menu className="w-5 h-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] sm:w-72 p-0 border-amber-100">
+        <SheetContent side="left" className="w-72 p-0 border-amber-100">
           <NavContent />
         </SheetContent>
       </Sheet>
