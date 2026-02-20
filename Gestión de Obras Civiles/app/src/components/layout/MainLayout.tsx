@@ -50,8 +50,9 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
+      {/* HEADER CON LOGO Y LOGOUT DEBAJO */}
       <div className="p-6 border-b border-amber-100">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
             <HardHat className="w-5 h-5 text-white" />
           </div>
@@ -60,6 +61,17 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
             <p className="text-xs text-gray-500">Gestión de Obras</p>
           </div>
         </div>
+        
+        {/* BOTÓN CERRAR SESIÓN DEBAJO DEL LOGO */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-xs"
+          onClick={onLogout}
+        >
+          <LogOut className="w-3 h-3 mr-2" />
+          Cerrar Sesión
+        </Button>
       </div>
 
       <ScrollArea className="flex-1 py-4">
@@ -90,26 +102,17 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
         </nav>
       </ScrollArea>
 
-      <div className="p-4 border-t border-amber-100">
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <User className="w-5 h-5 text-amber-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-            </div>
+      {/* FOOTER SOLO CON INFO DEL USUARIO (SIN LOGOUT) */}
+      <div className="p-4 border-t border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+            <User className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 truncate text-sm">{user.name}</p>
+            <p className="text-xs text-gray-500 capitalize">{user.role}</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={onLogout}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Cerrar Sesión
-        </Button>
       </div>
     </div>
   );
@@ -132,7 +135,7 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
             <Menu className="w-5 h-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0 border-amber-100">
+        <SheetContent side="left" className="w-[280px] sm:w-72 p-0 border-amber-100">
           <NavContent />
         </SheetContent>
       </Sheet>
