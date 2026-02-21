@@ -65,6 +65,13 @@ export function useObras() {
     return updateObra(id, { estado: 'terminada', fechaTermino: new Date().toISOString().split('T')[0] });
   }, [updateObra]);
 
+  const actualizarManoObra = useCallback((obraId: string, montoTotalNominas: number) => {
+  updateObra(obraId, { 
+    totalManoObra: montoTotalNominas,
+    // Recalcular avance financiero automáticamente
+  });
+}, [updateObra]);
+
   return {
     obras,
     createObra,
@@ -75,5 +82,6 @@ export function useObras() {
     getObrasActivas,
     getObrasByEstado,
     terminarObra,
+    actualizarManoObra,
   };
 }
