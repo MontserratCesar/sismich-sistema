@@ -175,3 +175,58 @@ export interface ObraFinanzas {
   desviacionPresupuestal: number;
   roi: number;
 }
+// NUEVAS INTERFACES PARA SISTEMA REAL
+
+export interface PartidaPresupuesto {
+  id: string;
+  concepto: string;
+  unidad: string;
+  cantidad: number;
+  precioUnitario: number;
+  importe: number; // cantidad * precioUnitario
+  avancePorcentaje: number; // 0-100 (lo que realmente lleva de avance)
+}
+
+// Extender Obra (o reemplazar la interfaz Obra existente)
+export interface Obra {
+  id: string;
+  nombre: string;
+  ubicacion: string;
+  ambito: ObraAmbito;
+  fechaInicio: string;
+  fechaTermino: string;
+  tipoRecurso: TipoRecurso;
+  residenteId: string;
+  residenteName?: string;
+  estado: EstadoObra;
+  
+  // PRESUPUESTO DESGLOSADO (NUEVO)
+  presupuestoTotal: number;
+  partidas: PartidaPresupuesto[]; // Aquí está el desglose real
+  
+  // GASTOS REALES (se actualizan automáticamente)
+  totalManoObra: number; // Suma de nóminas pagadas
+  totalMateriales: number; // Suma real de materiales registrados
+  totalEjercido: number; // totalManoObra + totalMateriales
+  
+  // AVANCES CALCULADOS (NUEVO)
+  avanceFisico: number; // Promedio de avance de partidas (real)
+  avanceFinanciero: number; // (totalEjercido / presupuestoTotal) * 100
+  
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Material real vinculado a obra
+export interface Material {
+  id: string;
+  obraId: string;
+  descripcion: string;
+  unidad: string;
+  cantidad: number;
+  precioUnitario: number;
+  importe: number;
+  fecha: string;
+  proveedor?: string;
+  factura?: string;
+}
