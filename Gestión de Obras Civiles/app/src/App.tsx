@@ -110,9 +110,23 @@ function App() {
   };
 
   const handlePagarNomina = (id: string) => {
-    pagarNomina(id);
-    toast.success('Pago registrado exitosamente');
-  };
+  const nomina = pagarNomina(id);
+  toast.success('Pago registrado exitosamente');
+  
+  // ACTUALIZAR LA OBRA CON EL NUEVO TOTAL
+  if (nomina) {
+    const nominasDeObra = nominas.filter(n => 
+      n.obraId === nomina.obraId && 
+      (n.estado === 'pagada' || n.estado === 'autorizada')
+    );
+    const totalManoObra = nominasDeObra.reduce((sum, n) => sum + n.totalNomina, 0);
+    
+    // Actualizar la obra con el nuevo total de mano de obra
+    updateObra(nomina.obraId, { 
+      totalManoObra: totalManoObra 
+    });
+  }
+};
 
   // Documento handlers
   const handleUploadDocumento = async (obraId: string, tipo: Parameters<typeof uploadDocumento>[1], nombre: string, file: File) => {
