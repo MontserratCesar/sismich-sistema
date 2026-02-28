@@ -18,6 +18,8 @@ import type { User, Obra, Nomina, UserRole } from '@/types';
 import { Toaster, toast } from 'sonner';
 import { NominaForm } from '@/components/nominas/NominaForm';
 import type { Nomina } from '@/types';
+import { useCajaChica } from '@/hooks/useCajaChica';
+import { CajaChicaForm } from '@/components/caja-chica/CajaChicaForm';
 
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
@@ -25,12 +27,16 @@ function App() {
   const { obras, createObra, updateObra, deleteObra } = useObras();
   const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina } = useNominas();
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
+  // INTEGRACIÓN DE CAJA CHICA
+  const { cajas, createCajaChica, getCajasByObra, getTotalGastosIndirectosByObra } = useCajaChica();
 
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   // ➕ NUEVOS ESTADOS PARA NÓMINAS
   const [selectedNomina, setSelectedNomina] = useState<Nomina | null>(null);
   const [showNominaForm, setShowNominaForm] = useState(false);
+  // INTEGRACIÓN DE CAJA CHICA
+  const [showCajaChicaForm, setShowCajaChicaForm] = useState(false);
 
   const handleLogin = (username: string, password: string, role: UserRole): boolean => {
     const success = login(username, password, role);
@@ -350,6 +356,32 @@ function App() {
             onViewDetail={(nomina) => setSelectedNomina(nomina)}
           />
         );
+        
+        case 'caja-chica':
+  if (showCajaChicaForm && selectedObra) {
+    return (
+      <CajaChicaForm
+        obraId={selectedObra.id}
+        obraName={selectedObra.nombre}
+        residenteName={user?.name || ''}
+        onSave={(data) => {
+          createCajaChica(data);
+          setShowCajaChicaForm(false);
+          toast.success('Caja chica registrada');
+        }}
+        onCancel={() => setShowCajaChicaForm(false)}
+      />
+    );
+  }
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Caja Chica - Gastos Indirectos</h2>
+      <Button onClick={() => setShowCajaChicaForm(true)} className="bg-green-600">
+        <Plus className="w-4 h-4 mr-2" /> Nueva Semana de Gastos
+      </Button>
+      {/* Aquí irá la lista de cajas chicas */}
+    </div>
+  );
 
       case 'usuarios':
         if (user.role === 'admin') {
