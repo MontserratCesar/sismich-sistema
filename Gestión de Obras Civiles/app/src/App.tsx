@@ -16,6 +16,8 @@ import { useNominas } from '@/hooks/useNominas';
 import { useDocumentos } from '@/hooks/useDocumentos';
 import type { User, Obra, Nomina, UserRole } from '@/types';
 import { Toaster, toast } from 'sonner';
+import { NominaForm } from '@/components/nominas/NominaForm';
+import type { Nomina } from '@/types';
 
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
@@ -26,7 +28,9 @@ function App() {
 
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
+  // ➕ NUEVOS ESTADOS PARA NÓMINAS
   const [selectedNomina, setSelectedNomina] = useState<Nomina | null>(null);
+  const [showNominaForm, setShowNominaForm] = useState(false);
 
   const handleLogin = (username: string, password: string, role: UserRole): boolean => {
     const success = login(username, password, role);
@@ -82,7 +86,60 @@ function App() {
     deleteObra(id);
     toast.success('Obra eliminada');
   };
+    // HANDLERS EXISTENTES 
+  
+  // ➕ NUEVO HANDLER PARA GUARDAR NÓMINA:
+  const handleSaveNomina = (nominaData: any) => {
+    const nuevaNomina = createNomina(nominaData);
+    
+    // Si se pagó inmediatamente o quieres actualizar la obra:
+    if (nuevaNomina.estado === 'pagada' && nuevaNomina.obraId) {
+      const obra = obras.find(o => o.id === nuevaNomina.obraId);
+      if (obra) {
+        // Calcular nuevo total de nóminas pagadas de esta obra
+        const nominasPagadas = nominas.filter(n => 
+          n.obraId === obra.id && n.estado === 'pagada'
+        );
+        const totalManoObra = nominasPagadas.reduce((sum, n) => sum + n.totalNomina, 0);
+        
+        // Actualizar la obra
+        updateObra(obra.id, {
+          ...obra,
+          gastoRealManoObra: totalManoObra,
+          gastoTotalReal: totalManoObra + obra.gastoRealMateriales + obra.gastoRealEquipo,
+          avanceFinancieroGlobal: obra.presupuesto.totalPresupuesto > 0 
+            ? ((totalManoObra + obra.gastoRealMateriales + obra.gastoRealEquipo) / obra.presupuesto.totalPresupuesto) * 100 
+            : 0
+        });
+      }
+    }
+    
+    setShowNominaForm(false);
+    toast.success('Nómina guardada exitosamente');
+  };
 
+  // ➕ NUEVO HANDLER PARA CAMBIAR ESTADO DE NÓMINA:
+  const handleCambiarEstadoNomina = (id: string, nuevoEstado: Nomina['estado']) => {
+    cambiarEstado(id, nuevoEstado, user?.name || '');
+    
+    // Si se marca como pagada, actualizar la obra automáticamente
+    if (nuevoEstado === 'pagada') {
+      const nomina = nominas.find(n => n.id === id);
+      if (nomina && nomina.obraId) {
+        const obra = obras.find(o => o.id === nomina.obraId);
+        if (obra) {
+          const totalPagado = getTotalPagadoByObra(nomina.obraId);
+          updateObra(nomina.obraId, {
+            gastoRealManoObra: totalPagado,
+            gastoTotalReal: totalPagado + obra.gastoRealMateriales + obra.gastoRealEquipo
+          });
+        }
+      }
+    }
+    
+    toast.success(`Nómina ${nuevoEstado}`);
+  };
+  
   // Nomina handlers
   const handleCreateNomina = (nominaData: Parameters<typeof createNomina>[0]) => {
     createNomina(nominaData);
@@ -240,20 +297,57 @@ function App() {
           />
         );
 
-      case 'nominas':
+        case 'nominas':
+        // Si estamos creando una nómina nueva (formulario)
+        if (showNominaForm && selectedObra) {
+          return (
+            <NominaForm
+              obraId={selectedObra.id}
+              obraName={selectedObra.nombre}
+              residenteName={user?.name || ''}
+              onSave={handleSaveNomina}
+              onCancel={() => setShowNominaForm(false)}
+            />
+          );
+        }
+        
+        // Si estamos viendo el detalle de una nómina específica
+        if (selectedNomina) {
+          return (
+            <NominaDetail
+              nomina={selectedNomina}
+              obra={obras.find(o => o.id === selectedNomina.obraId)}
+              currentUser={user}
+              onBack={() => setSelectedNomina(null)}
+              onValidar={handleValidarNomina}
+              onAutorizar={handleAutorizarNomina}
+              onPagar={handlePagarNomina}
+            />
+          );
+        }
+        
+        // Vista por defecto: Lista de nóminas
         return (
           <NominasManager
             nominas={nominas}
             obras={obras}
             users={users}
             currentUser={user}
-            onCreate={handleCreateNomina}
+            onCreate={() => {
+              // Verificar que haya una obra seleccionada
+              if (!selectedObra) {
+                toast.error('Primero selecciona una obra desde el menú Obras');
+                setCurrentView('obras');
+                return;
+              }
+              setShowNominaForm(true);
+            }}
             onUpdate={handleUpdateNomina}
             onDelete={handleDeleteNomina}
             onValidar={handleValidarNomina}
             onAutorizar={handleAutorizarNomina}
             onPagar={handlePagarNomina}
-            onViewDetail={handleViewNomina}
+            onViewDetail={(nomina) => setSelectedNomina(nomina)}
           />
         );
 
