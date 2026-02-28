@@ -26,8 +26,7 @@ function App() {
   const { users, createUser, updateUser, deleteUser, resetPassword } = useUsers();
   const { obras, createObra, updateObra, deleteObra } = useObras();
   
-  // ✅ CORREGIDO: Quité validarNomina, autorizarNomina, pagarNomina que no existen
-  const { nominas, createNomina, updateNomina, deleteNomina } = useNominas();
+  const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina } = useNominas();
   
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
   
