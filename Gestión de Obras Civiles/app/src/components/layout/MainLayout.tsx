@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Wallet } from 'lucide-react';
 import {
   HardHat,
   LayoutDashboard,
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'residente', 'contadora'] },
   { id: 'obras', label: 'Obras', icon: Building2, roles: ['admin', 'residente'] },
   { id: 'nominas', label: 'Nóminas', icon: DollarSign, roles: ['admin', 'residente', 'contadora'], badge: 0 },
+  { id: 'caja-chica', label: 'Caja Chica', icon: Wallet, roles: ['admin', 'residente'] },
   { id: 'documentos', label: 'Documentos', icon: FileText, roles: ['admin', 'residente', 'contadora'] },
   { id: 'usuarios', label: 'Usuarios', icon: Users, roles: ['admin'] },
   { id: 'configuracion', label: 'Configuración', icon: Settings, roles: ['admin'] },
