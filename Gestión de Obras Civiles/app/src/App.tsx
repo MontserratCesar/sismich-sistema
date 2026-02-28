@@ -111,13 +111,13 @@ function App() {
         
         // Actualizar la obra
         updateObra(obra.id, {
-          ...obra,
-          gastoRealManoObra: totalManoObra,
-          gastoTotalReal: totalManoObra + obra.gastoRealMateriales + obra.gastoRealEquipo,
-          avanceFinancieroGlobal: obra.presupuesto.totalPresupuesto > 0 
-            ? ((totalManoObra + obra.gastoRealMateriales + obra.gastoRealEquipo) / obra.presupuesto.totalPresupuesto) * 100 
-            : 0
-        });
+  ...obra,
+  gastoRealManoObra: totalManoObra,
+  gastoTotalReal: totalManoObra + obra.gastoRealMateriales + obra.gastoRealEquipo,
+  avanceFinancieroGlobal: (obra.presupuesto || 0) > 0 
+    ? ((totalManoObra + (obra.gastoRealMateriales || 0) + (obra.gastoRealEquipo || 0)) / obra.presupuesto) * 100 
+    : 0
+});
       }
     }
     
@@ -127,7 +127,7 @@ function App() {
 
   // ➕ NUEVO HANDLER PARA CAMBIAR ESTADO DE NÓMINA:
   const handleCambiarEstadoNomina = (id: string, nuevoEstado: Nomina['estado']) => {
-    cambiarEstado(id, nuevoEstado, user?.name || '');
+    updateNomina(id, { estado: nuevoEstado });
     
     // Si se marca como pagada, actualizar la obra automáticamente
     if (nuevoEstado === 'pagada') {
@@ -337,7 +337,6 @@ function App() {
         return (
           <NominasManager
             nominas={nominas}
-            obras={obras}
             users={users}
             currentUser={user}
             onCreate={() => {
