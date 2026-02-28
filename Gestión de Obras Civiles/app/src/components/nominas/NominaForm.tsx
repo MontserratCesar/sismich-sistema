@@ -72,9 +72,8 @@ export function NominaForm({ obraId, obraName, residenteName, onSave, onCancel }
     if (field === 'dias' || field === 'salarioDiario') {
       const dias = field === 'dias' ? value : updated[index].dias;
       const salario = field === 'salarioDiario' ? value : updated[index].salarioDiario;
-      const totalDias = Object.values(dias).reduce((sum, d) => sum + (Number(d) || 0), 0);
-      updated[index].totalDias = totalDias;
-      updated[index].totalSemana = totalDias * Number(salario);
+      const totalDias = Object.values(dias).reduce((sum: number, d: any) => sum + (Number(d) || 0), 0) as number;
+updated[index].totalDias = totalDias as number;
     }
     
     setEmpleados(updated);

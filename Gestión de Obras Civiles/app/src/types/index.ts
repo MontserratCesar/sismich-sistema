@@ -55,7 +55,6 @@ export interface PresupuestoObra {
   totalPresupuesto: number;
 }
 
-// OBRA - Con todos los campos que usan los componentes
 export interface Obra {
   id: string;
   nombre: string;
@@ -68,13 +67,13 @@ export interface Obra {
   residenteId: string;
   residenteName?: string;
   estado: EstadoObra;
+  semanaActualReporte?: number;
   
-  // Presupuesto (compatible con ambos códigos)
-  presupuesto: number;
-  presupuestoTotal?: number;  // Alias para compatibilidad
-  presupuestoDetallado?: PresupuestoObra;
+  // ✅ CAMBIO: Ahora presupuesto es el objeto
+  presupuesto: PresupuestoObra;
+  presupuestoTotal?: number;  // Opcional, por si necesitas el total como número separado
   
-  // Campos de gastos (nombres que usan los componentes)
+  // ... resto de campos (totalManoObra, gastoRealMateriales, etc.)
   totalManoObra?: number;
   totalMateriales?: number;
   gastoRealMateriales?: number;
@@ -84,10 +83,7 @@ export interface Obra {
   avanceFisicoGlobal?: number;
   avanceFinancieroGlobal?: number;
   
-  // Campos que faltaban para useDashboard
   partidas?: any[];
-  
-  // Campos para nóminas y otros
   nominasIds?: string[];
   requisicionesIds?: string[];
   destajosIds?: string[];
@@ -204,9 +200,20 @@ export interface ObraFinanzas {
 
 // NUEVO: RegistroAvanceSemanal que faltaba
 export interface RegistroAvanceSemanal {
+  id?: string;
   semana: number;
-  fechaInicio: string;
-  fechaFin: string;
-  porcentajeAvance: number;
+  semanaDel?: string;
+  semanaAl?: string;
+  numeroSemana?: number;
+  cantidadEjecutada?: number;
+  porcentajeEstaSemana?: number;
+  porcentajeAcumulado?: number;
+  porcentajeAjustado?: number;
+  motivoAjuste?: string;
+  reportadoPor?: string;
+  fechaReporte?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  porcentajeAvance?: number; 
   notas?: string;
 }

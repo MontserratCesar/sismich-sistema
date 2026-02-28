@@ -43,7 +43,15 @@ const emptyObra: Omit<Obra, 'id' | 'createdAt' | 'updatedAt'> = {
   tipoRecurso: 'propio',
   residenteId: '',
   estado: 'activa',
-  presupuesto: 0,
+  presupuesto: {
+  conceptos: [],
+  sumaMateriales: 0,
+  sumaManoObra: 0,
+  sumaEquipo: 0,
+  costoDirecto: 0,
+  indirectos: 0,
+  totalPresupuesto: 0
+},
 };
 
 export function ObrasManager({ obras, users, currentUser, onCreate, onUpdate, onDelete, onViewDetail }: ObrasManagerProps) {
@@ -169,7 +177,7 @@ export function ObrasManager({ obras, users, currentUser, onCreate, onUpdate, on
             </div>
             <div className="flex items-center gap-2 text-sm">
               <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-600">Presupuesto: {formatCurrency(obra.presupuesto)}</span>
+              <span className="text-gray-600">Presupuesto: formatCurrency(obra.presupuesto.totalPresupuesto)</span>
             </div>
           </div>
 
@@ -284,9 +292,14 @@ export function ObrasManager({ obras, users, currentUser, onCreate, onUpdate, on
                       <Label>Presupuesto *</Label>
                       <Input
                         type="number"
-                        value={formData.presupuesto}
-                        onChange={(e) => setFormData({ ...formData, presupuesto: parseFloat(e.target.value) || 0 })}
-                        placeholder="0.00"
+                        value={formData.presupuesto?.totalPresupuesto || 0}
+                        onChange={(e) => setFormData({ 
+                        ...formData, 
+                        presupuesto: {
+                        ...formData.presupuesto,
+                        totalPresupuesto: parseFloat(e.target.value) || 0
+  }
+})}
                       />
                     </div>
                     {currentUser.role === 'admin' && (

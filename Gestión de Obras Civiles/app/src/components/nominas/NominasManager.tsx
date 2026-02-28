@@ -11,6 +11,13 @@ interface NominasManagerProps {
   onCreateNomina: () => void;
   onViewNomina: (nomina: Nomina) => void;
   onCambiarEstado: (id: string, estado: Nomina['estado']) => void;
+  onCreate?: () => void;
+  onUpdate?: (id: string, updates: Partial<Nomina>) => void;
+  onDelete?: (id: string) => void;
+  onValidar?: (id: string) => void;
+  onAutorizar?: (id: string) => void;
+  onPagar?: (id: string) => void;
+  onViewDetail?: (nomina: Nomina) => void;
 }
 
 const estadoColors = {

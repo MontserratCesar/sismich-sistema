@@ -133,7 +133,7 @@ export function ObraDetail({
               </div>
               <div>
                 <p className="text-sm text-gray-500">Presupuesto</p>
-                <p className="font-semibold">{formatCurrency(obra.presupuesto)}</p>
+                <p className="font-semibold">formatCurrency(obra.presupuesto.totalPresupuesto)</p>
               </div>
             </div>
           </CardContent>

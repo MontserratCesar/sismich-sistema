@@ -114,9 +114,9 @@ function App() {
   ...obra,
   gastoRealManoObra: totalManoObra,
   gastoTotalReal: totalManoObra + obra.gastoRealMateriales + obra.gastoRealEquipo,
-  avanceFinancieroGlobal: (obra.presupuesto || 0) > 0 
-    ? ((totalManoObra + (obra.gastoRealMateriales || 0) + (obra.gastoRealEquipo || 0)) / obra.presupuesto) * 100 
-    : 0
+  avanceFinancieroGlobal: obra.presupuesto?.totalPresupuesto > 0 
+  ? ((totalManoObra + (obra.gastoRealMateriales || 0) + (obra.gastoRealEquipo || 0)) / obra.presupuesto.totalPresupuesto) * 100 
+  : 0
 });
       }
     }
@@ -336,25 +336,19 @@ function App() {
         // Vista por defecto: Lista de nóminas
         return (
           <NominasManager
-            nominas={nominas}
-            users={users}
-            currentUser={user}
-            onCreate={() => {
-              // Verificar que haya una obra seleccionada
-              if (!selectedObra) {
-                toast.error('Primero selecciona una obra desde el menú Obras');
-                setCurrentView('obras');
-                return;
-              }
-              setShowNominaForm(true);
-            }}
-            onUpdate={handleUpdateNomina}
-            onDelete={handleDeleteNomina}
-            onValidar={handleValidarNomina}
-            onAutorizar={handleAutorizarNomina}
-            onPagar={handlePagarNomina}
-            onViewDetail={(nomina) => setSelectedNomina(nomina)}
-          />
+  nominas={nominas}
+  obraName={selectedObra?.nombre || ''}
+  onCreateNomina={() => {
+    if (!selectedObra) {
+      toast.error('Primero selecciona una obra desde el menú Obras');
+      setCurrentView('obras');
+      return;
+    }
+    setShowNominaForm(true);
+  }}
+  onViewNomina={(nomina) => setSelectedNomina(nomina)}
+  onCambiarEstado={(id, estado) => handleUpdateNomina(id, { estado })}
+/>
         );
         
         case 'caja-chica':

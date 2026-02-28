@@ -27,7 +27,7 @@ const calcularPresupuesto = (conceptos: ConceptoPresupuesto[]) => {
     .reduce((sum, c) => sum + c.importe, 0);
 
   const sumaEquipo = conceptosCalculados
-    .filter(c => c.tipo === 'equipo_herramienta')
+    .filter(c => c.tipo === 'equipo')
     .reduce((sum, c) => sum + c.importe, 0);
 
   const costoDirecto = sumaMateriales + sumaManoObra + sumaEquipo;
@@ -161,7 +161,7 @@ export function useObrasNuevo() {
 
     const nuevoRegistro: RegistroAvanceSemanal = {
       id: `registro-${Date.now()}`,
-      semanaDel: data.semanaDel,
+      semana: parseInt(data.semanaDel) || 1,
       semanaAl: data.semanaAl,
       numeroSemana: data.numeroSemana,
       cantidadEjecutada: data.cantidadEjecutada,

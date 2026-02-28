@@ -170,7 +170,7 @@ export function ResidenteDashboard({ user, obras, nominas, onViewObra, onCreateN
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                     <div>
                       <p className="text-xs text-gray-500">Presupuesto</p>
-                      <p className="font-medium text-gray-900">{formatCurrency(obra.presupuesto)}</p>
+                      <p className="font-medium text-gray-900">formatCurrency(obra.presupuesto.totalPresupuesto)</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Avance Físico</p>

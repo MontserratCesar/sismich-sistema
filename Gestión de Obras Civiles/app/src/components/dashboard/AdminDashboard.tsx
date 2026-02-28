@@ -236,7 +236,7 @@ export function AdminDashboard({ obras, nominas, users }: AdminDashboardProps) {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Presupuesto</p>
-                      <p className="font-semibold text-gray-900">{formatCurrency(obra.presupuesto)}</p>
+                      <p className="font-semibold text-gray-900">formatCurrency(obra.presupuesto.totalPresupuesto)</p>
                     </div>
                   </div>
                   
