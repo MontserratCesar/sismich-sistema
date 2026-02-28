@@ -1,14 +1,12 @@
 // SISTEMA SISMICH - CONTROL DE OBRA CIVIL INTEGRAL
-// Basado en formatos Excel reales de la empresa
-// SISMICH - Tipos compatibles (no romper lo existente)
 
 export type UserRole = 'admin' | 'residente' | 'contadora';
 export type EstadoObra = 'activa' | 'terminada' | 'cancelada';
 export type TipoConcepto = 'material' | 'mano_obra' | 'equipo';
+export type ObraAmbito = 'publica' | 'privada';
+export type TipoRecurso = 'propio' | 'financiamiento' | 'prestamo';
 
-// ==========================================
-// USUARIOS (igual)
-// ==========================================
+// USUARIOS
 export interface User {
   id: string;
   username: string;
@@ -21,9 +19,7 @@ export interface User {
   isActive: boolean;
 }
 
-// ==========================================
-// PRESUPUESTO (NUEVO - pero compatible)
-// ==========================================
+// PRESUPUESTO
 export interface ConceptoPresupuesto {
   id: string;
   num: number;
@@ -36,53 +32,71 @@ export interface ConceptoPresupuesto {
   avancePorcentaje?: number;
   cantidadEjecutada?: number;
   gastoReal?: number;
+  // Nuevos campos que faltaban:
+  porcentajeAvanceAjustado?: number;
+  porcentajeAvanceCalculado?: number;
+  porcentajeAvanceFinal?: number;
+  cantidadAcumuladaEjecutada?: number;
+  registrosSemanales?: any[];
 }
 
 export interface PresupuestoObra {
   conceptos: ConceptoPresupuesto[];
   sumaMateriales: number;
   sumaManoObra: number;
-  sumaEquipo: number;
+  sumaEquipo?: number;
+  sumaEquipoHerramienta?: number;
   costoDirecto: number;
   indirectos: number;
+  indirectosPorcentaje?: number;
+  indirectosMonto?: number;
+  utilidadPorcentaje?: number;
+  utilidadMonto?: number;
   totalPresupuesto: number;
 }
 
-// ==========================================
-// OBRA (COMPATIBLE - mantiene campos antiguos + nuevos opcionales)
-// ==========================================
+// OBRA - Con todos los campos que usan los componentes
 export interface Obra {
   id: string;
   nombre: string;
   ubicacion: string;
-  ambito: 'publica' | 'privada';
+  municipio?: string;
+  ambito: ObraAmbito;
   fechaInicio: string;
   fechaTermino: string;
-  tipoRecurso: 'propio' | 'financiamiento' | 'prestamo';
+  tipoRecurso: TipoRecurso;
   residenteId: string;
   residenteName?: string;
   estado: EstadoObra;
   
-  // PARA CÓDIGO ANTIGUO (mantener)
-  presupuesto: number; 
+  // Presupuesto (compatible con ambos códigos)
+  presupuesto: number;
+  presupuestoTotal?: number;  // Alias para compatibilidad
   presupuestoDetallado?: PresupuestoObra;
   
-  // Campos nuevos - AGREGAR totalManoObra:
-  totalManoObra?: number;        // ← AGREGAR ESTA LÍNEA
-  gastoRealMateriales?: number;  // ← Cambiar de gastoRealManoObra a esto para consistencia
-  gastoRealManoObra?: number;    // ← O mantener ambos
+  // Campos de gastos (nombres que usan los componentes)
+  totalManoObra?: number;
+  totalMateriales?: number;
+  gastoRealMateriales?: number;
+  gastoRealManoObra?: number;
   gastoRealEquipo?: number;
   gastoTotalReal?: number;
   avanceFisicoGlobal?: number;
   avanceFinancieroGlobal?: number;
   
+  // Campos que faltaban para useDashboard
+  partidas?: any[];
+  
+  // Campos para nóminas y otros
+  nominasIds?: string[];
+  requisicionesIds?: string[];
+  destajosIds?: string[];
+  
   createdAt: string;
   updatedAt: string;
 }
 
-// ==========================================
-// NÓMINA (COMPATIBLE - con campos que esperan los componentes)
-// ==========================================
+// NÓMINA
 export interface NominaEmpleado {
   id: string;
   nombre: string;
@@ -103,26 +117,26 @@ export interface Nomina {
   semanaDel: string;
   semanaAl: string;
   fechaElaboracion: string;
+  numeroSemana?: number;  // Campo que faltaba
   empleados: NominaEmpleado[];
   totalNomina: number;
-  estado: 'pendiente' | 'validada' | 'autorizada' | 'pagada';
+  estado: 'pendiente' | 'validada' | 'autorizada' | 'pagada' | 'rechazada';
   
-  // IMPORTANTE: Campos que usan los componentes antiguos
-  residenteId: string;        // Lo necesita ResidenteDashboard
-  residenteName?: string;     // Lo necesita NominaDetail
+  residenteId: string;
+  residenteName?: string;
   
-  // Opcionales
+  // Campos para el flujo de autorización
   validadaAt?: string;
   autorizadaAt?: string;
   pagadaAt?: string;
+  autorizo?: string;  // Campo que faltaba
   elaboro?: string;
+  
   createdAt: string;
   updatedAt: string;
 }
 
-// ==========================================
-// CAJA CHICA (NUEVO)
-// ==========================================
+// CAJA CHICA
 export interface GastoCajaChica {
   id: string;
   descripcion: string;
@@ -147,9 +161,7 @@ export interface CajaChica {
   createdAt: string;
 }
 
-// ==========================================
-// DOCUMENTOS (para ObrasManager)
-// ==========================================
+// DOCUMENTOS
 export interface DocumentoObra {
   id: string;
   obraId: string;
@@ -161,17 +173,15 @@ export interface DocumentoObra {
   uploadedBy: string;
 }
 
-// ==========================================
-// DASHBOARD (compatible)
-// ==========================================
+// DASHBOARD
 export interface DashboardStats {
   totalObras: number;
   obrasActivas: number;
   obrasTerminadas: number;
-  totalInversion: number;      // Código antiguo lo usa
-  totalManoObra: number;       // Código antiguo lo usa
+  totalInversion: number;
+  totalManoObra: number;
   totalMateriales: number;
-  gananciaPerdida: number;     // Código antiguo lo usa
+  gananciaPerdida: number;
   nominasPendientes: number;
   nominasAutorizadas: number;
   nominasPagadas?: number;
@@ -180,7 +190,8 @@ export interface DashboardStats {
 export interface ObraFinanzas {
   obraId: string;
   obraName: string;
-  presupuesto: number;         // Compatible con código antiguo
+  presupuesto: number;
+  presupuestoTotal?: number;
   manoObraTotal: number;
   materialesTotal: number;
   gastosTotal: number;
@@ -188,5 +199,14 @@ export interface ObraFinanzas {
   avanceFinanciero: number;
   desviacionPresupuestal: number;
   roi?: number;
-  balance: number;
+  balance?: number;  // Opcional ahora
+}
+
+// NUEVO: RegistroAvanceSemanal que faltaba
+export interface RegistroAvanceSemanal {
+  semana: number;
+  fechaInicio: string;
+  fechaFin: string;
+  porcentajeAvance: number;
+  notas?: string;
 }
