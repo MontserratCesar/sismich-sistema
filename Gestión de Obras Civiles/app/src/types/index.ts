@@ -64,14 +64,13 @@ export interface Obra {
   estado: EstadoObra;
   
   // PARA CÓDIGO ANTIGUO (mantener)
-  presupuesto: number;  // Este es el número total (código antiguo lo usa)
+  presupuesto: number; 
+  presupuestoDetallado?: PresupuestoObra;
   
-  // PARA CÓDIGO NUEVO (opcional)
-  presupuestoDetallado?: PresupuestoObra;  // El objeto completo (nuevo)
-  
-  // Campos nuevos opcionales (para no romper datos existentes)
-  gastoRealMateriales?: number;
-  gastoRealManoObra?: number;
+  // Campos nuevos - AGREGAR totalManoObra:
+  totalManoObra?: number;        // ← AGREGAR ESTA LÍNEA
+  gastoRealMateriales?: number;  // ← Cambiar de gastoRealManoObra a esto para consistencia
+  gastoRealManoObra?: number;    // ← O mantener ambos
   gastoRealEquipo?: number;
   gastoTotalReal?: number;
   avanceFisicoGlobal?: number;
