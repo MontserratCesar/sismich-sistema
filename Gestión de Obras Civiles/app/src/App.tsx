@@ -20,13 +20,14 @@ import { useDocumentos } from '@/hooks/useDocumentos';
 import type { User, Obra, Nomina, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { UsuariosManager } from '@/components/usuarios/UsuariosManager';
 
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
   const { users, createUser, updateUser, deleteUser, resetPassword } = useUsers();
   const { obras, createObra, updateObra, deleteObra } = useObras();
-  
-  const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina } = useNominas();
+  // agrega getTotalPagadoByObra:
+const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina, getTotalPagadoByObra } = useNominas();
   
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
   
