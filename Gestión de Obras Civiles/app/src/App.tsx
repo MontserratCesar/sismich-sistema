@@ -305,6 +305,41 @@ function App() {
         );
 
         case 'nominas':
+          // ➕ NUEVO: Si no hay obra seleccionada, mostrar selector
+  if (!selectedObra) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Gestión de Nóminas</h2>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <p className="mb-4 text-gray-600">Selecciona una obra para ver y crear nóminas:</p>
+          <select 
+            onChange={(e) => {
+              const obra = obras.find(o => o.id === e.target.value);
+              if (obra) {
+                setSelectedObra(obra);
+                toast.success(`Obra seleccionada: ${obra.nombre}`);
+              }
+            }}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
+            defaultValue=""
+          >
+            <option value="" disabled>-- Seleccionar obra --</option>
+            {obras.map(obra => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nombre} ({obra.ubicacion})
+              </option>
+            ))}
+          </select>
+          
+          {obras.length === 0 && (
+            <p className="mt-4 text-red-500 text-sm">
+              No hay obras registradas. Primero crea una obra en el menú "Obras".
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
         // Si estamos creando una nómina nueva (formulario)
         if (showNominaForm && selectedObra) {
           return (
