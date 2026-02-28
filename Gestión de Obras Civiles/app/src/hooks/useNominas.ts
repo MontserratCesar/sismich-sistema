@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Nomina, NominaEmpleado } from '@/types';
+import { useAuth } from '@/hooks/useAuth'; 
 
 const NOMINAS_KEY = 'sismich_nominas_v2';
 
 export function useNominas() {
   const [nominas, setNominas] = useState<Nomina[]>([]);
+  const { user } = useAuth();
 
   // Cargar al iniciar
-  useEffect(() => {
+  useEffect(() => { 
     const stored = localStorage.getItem(NOMINAS_KEY);
     if (stored) {
       try {
@@ -131,6 +133,19 @@ export function useNominas() {
       .reduce((sum, n) => sum + n.totalNomina, 0);
   }, [nominas]);
 
+    // ➕ Funciones específicas para los handlers de App.tsx
+  const validarNomina = useCallback((id: string): Nomina | null => {
+    return cambiarEstado(id, 'validada', user?.name || 'sistema');
+  }, [cambiarEstado, user]);
+
+  const autorizarNomina = useCallback((id: string): Nomina | null => {
+    return cambiarEstado(id, 'autorizada', user?.name || 'sistema');
+  }, [cambiarEstado, user]);
+
+  const pagarNomina = useCallback((id: string): Nomina | null => {
+    return cambiarEstado(id, 'pagada', user?.name || 'sistema');
+  }, [cambiarEstado, user]);
+
   return {
     nominas,
     createNomina,
@@ -139,5 +154,8 @@ export function useNominas() {
     cambiarEstado,
     getNominasByObra,
     getTotalPagadoByObra
+    validarNomina,    
+    autorizarNomina,  
+    pagarNomina,
   };
 }
