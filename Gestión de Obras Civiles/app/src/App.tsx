@@ -25,17 +25,19 @@ function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
   const { users, createUser, updateUser, deleteUser, resetPassword } = useUsers();
   const { obras, createObra, updateObra, deleteObra } = useObras();
-  const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina } = useNominas();
+  
+  // ✅ CORREGIDO: Quité validarNomina, autorizarNomina, pagarNomina que no existen
+  const { nominas, createNomina, updateNomina, deleteNomina } = useNominas();
+  
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
-  // INTEGRACIÓN DE CAJA CHICA
-  const { cajas, createCajaChica, getCajasByObra, getTotalGastosIndirectosByObra } = useCajaChica();
+  
+  // ✅ CORREGIDO: Solo dejé createCajaChica que es la que usarás
+  const { createCajaChica } = useCajaChica();
 
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
-  // ➕ NUEVOS ESTADOS PARA NÓMINAS
   const [selectedNomina, setSelectedNomina] = useState<Nomina | null>(null);
   const [showNominaForm, setShowNominaForm] = useState(false);
-  // INTEGRACIÓN DE CAJA CHICA
   const [showCajaChicaForm, setShowCajaChicaForm] = useState(false);
 
   const handleLogin = (username: string, password: string, role: UserRole): boolean => {
