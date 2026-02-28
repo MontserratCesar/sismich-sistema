@@ -35,7 +35,7 @@ jobs:
         run: cd "Gestión de Obras Civiles/app" && npm ci
       
       - name: Build
-        run: cd "Gestión de Obras Civiles/app" && npm run build || true
+        run: cd "Gestión de Obras Civiles/app" && npm run build 
         env:
           CI: false
       
