@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Toaster, toast } from 'sonner';
 import { LoginForm } from '@/components/login/LoginForm';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
@@ -8,18 +9,17 @@ import { ObrasManager } from '@/components/obras/ObrasManager';
 import { ObraDetail } from '@/components/obras/ObraDetail';
 import { NominasManager } from '@/components/nominas/NominasManager';
 import { NominaDetail } from '@/components/nominas/NominaDetail';
-import { UsuariosManager } from '@/components/usuarios/UsuariosManager';
+import { NominaForm } from '@/components/nominas/NominaForm';
+import { CajaChicaForm } from '@/components/caja-chica/CajaChicaForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsers } from '@/hooks/useUsers';
 import { useObras } from '@/hooks/useObras';
 import { useNominas } from '@/hooks/useNominas';
+import { useCajaChica } from '@/hooks/useCajaChica';
 import { useDocumentos } from '@/hooks/useDocumentos';
 import type { User, Obra, Nomina, UserRole } from '@/types';
-import { Toaster, toast } from 'sonner';
-import { NominaForm } from '@/components/nominas/NominaForm';
-import type { Nomina } from '@/types';
-import { useCajaChica } from '@/hooks/useCajaChica';
-import { CajaChicaForm } from '@/components/caja-chica/CajaChicaForm';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
