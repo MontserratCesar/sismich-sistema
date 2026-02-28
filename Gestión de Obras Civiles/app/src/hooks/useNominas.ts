@@ -153,9 +153,9 @@ export function useNominas() {
     deleteNomina,
     cambiarEstado,
     getNominasByObra,
-    getTotalPagadoByObra
+    getTotalPagadoByObra,
     validarNomina,    
-    autorizarNomina,  
+    autorizarNomina,
     pagarNomina,
   };
 }
