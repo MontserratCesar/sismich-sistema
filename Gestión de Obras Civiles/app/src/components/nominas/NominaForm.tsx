@@ -67,15 +67,6 @@ export function NominaForm({ obraId, obraName, residenteName, onSave, onCancel }
   const updateEmpleado = (index: number, field: string, value: any) => {
     const updated = [...empleados];
     updated[index] = { ...updated[index], [field]: value };
-    
-    // Recalcular totales si cambiaron días o salario
-    if (field === 'dias' || field === 'salarioDiario') {
-      const dias = field === 'dias' ? value : updated[index].dias;
-      const salario = field === 'salarioDiario' ? value : updated[index].salarioDiario;
-      const totalDias = Object.values(dias).reduce((sum: number, d: any) => sum + (Number(d) || 0), 0) as number;
-updated[index].totalDias = totalDias as number;
-    }
-    
     setEmpleados(updated);
   };
 
@@ -83,7 +74,34 @@ updated[index].totalDias = totalDias as number;
     const numValue = value === '' ? 0 : Math.min(Math.max(parseFloat(value), 0), 1);
     const updated = [...empleados];
     const newDias = { ...updated[empIndex].dias, [dia]: numValue };
-    updateEmpleado(empIndex, 'dias', newDias);
+    
+    // Calcular totales automáticamente
+    const totalDias = Object.values(newDias).reduce((sum, d) => sum + (Number(d) || 0), 0);
+    const salarioDiario = updated[empIndex].salarioDiario;
+    const totalSemana = totalDias * salarioDiario;
+    
+    updated[empIndex] = {
+      ...updated[empIndex],
+      dias: newDias,
+      totalDias,
+      totalSemana
+    };
+    
+    setEmpleados(updated);
+  };
+
+  const updateSalario = (index: number, value: string) => {
+    const salarioDiario = parseFloat(value) || 0;
+    const updated = [...empleados];
+    const totalDias = updated[index].totalDias;
+    const totalSemana = totalDias * salarioDiario;
+    
+    updated[index] = {
+      ...updated[index],
+      salarioDiario,
+      totalSemana
+    };
+    setEmpleados(updated);
   };
 
   const handleSubmit = () => {
@@ -217,7 +235,7 @@ updated[index].totalDias = totalDias as number;
                       <Input
                         type="number"
                         value={emp.salarioDiario || ''}
-                        onChange={(e) => updateEmpleado(index, 'salarioDiario', parseFloat(e.target.value))}
+                        onChange={(e) => updateSalario(index, e.target.value)}
                         className="w-full text-right"
                         placeholder="0.00"
                       />

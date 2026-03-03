@@ -305,7 +305,7 @@ function App() {
         );
 
         case 'nominas':
-          // ➕ NUEVO: Si no hay obra seleccionada, mostrar selector
+  // Si no hay obra seleccionada, mostrar selector
   if (!selectedObra) {
     return (
       <div className="p-6 max-w-2xl mx-auto">
@@ -340,51 +340,93 @@ function App() {
       </div>
     );
   }
-        // Si estamos creando una nómina nueva (formulario)
-        if (showNominaForm && selectedObra) {
-          return (
-            <NominaForm
-              obraId={selectedObra.id}
-              obraName={selectedObra.nombre}
-              residenteName={user?.name || ''}
-              onSave={handleSaveNomina}
-              onCancel={() => setShowNominaForm(false)}
-            />
-          );
-        }
-        
-        // Si estamos viendo el detalle de una nómina específica
-        if (selectedNomina) {
-          return (
-            <NominaDetail
-              nomina={selectedNomina}
-              obra={obras.find(o => o.id === selectedNomina.obraId)}
-              currentUser={user}
-              onBack={() => setSelectedNomina(null)}
-              onValidar={handleValidarNomina}
-              onAutorizar={handleAutorizarNomina}
-              onPagar={handlePagarNomina}
-            />
-          );
-        }
-        
-        // Vista por defecto: Lista de nóminas
-        return (
-          <NominasManager
-  nominas={nominas}
-  obraName={selectedObra?.nombre || ''}
-  onCreateNomina={() => {
-    if (!selectedObra) {
-      toast.error('Primero selecciona una obra desde el menú Obras');
-      setCurrentView('obras');
-      return;
-    }
-    setShowNominaForm(true);
-  }}
-  onViewNomina={(nomina) => setSelectedNomina(nomina)}
-  onCambiarEstado={(id, estado) => handleUpdateNomina(id, { estado })}
-/>
-        );
+
+  // Si HAY obra seleccionada pero NO estamos en el formulario ni viendo detalle
+  // Mostramos la vista intermedia con el botón de crear
+  if (!showNominaForm && !selectedNomina) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">Nóminas de la Obra</h2>
+            <p className="text-gray-600">{selectedObra.nombre}</p>
+          </div>
+          <Button 
+            onClick={() => setShowNominaForm(true)} 
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Nueva Nómina
+          </Button>
+        </div>
+
+        {/* Si hay nóminas existentes, mostrar lista simple */}
+        {nominas.filter(n => n.obraId === selectedObra.id).length > 0 ? (
+          <div className="space-y-2">
+            {nominas
+              .filter(n => n.obraId === selectedObra.id)
+              .map(nomina => (
+                <div 
+                  key={nomina.id} 
+                  onClick={() => setSelectedNomina(nomina)}
+                  className="bg-white p-4 rounded-lg shadow border hover:shadow-md cursor-pointer flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-bold">Semana {nomina.numeroSemana || 'N/A'}</p>
+                    <p className="text-sm text-gray-600">{nomina.semanaDel} al {nomina.semanaAl}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg">${nomina.totalNomina?.toLocaleString('es-MX') || 0}</p>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      nomina.estado === 'pagada' ? 'bg-green-100 text-green-800' :
+                      nomina.estado === 'autorizada' ? 'bg-blue-100 text-blue-800' :
+                      nomina.estado === 'validada' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {nomina.estado?.toUpperCase() || 'PENDIENTE'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="bg-gray-50 p-8 rounded-lg text-center border-2 border-dashed border-gray-300">
+            <p className="text-gray-500 mb-4">No hay nóminas registradas para esta obra</p>
+            <Button onClick={() => setShowNominaForm(true)} className="bg-blue-600">
+              <Plus className="w-4 h-4 mr-2" /> Crear Primera Nómina
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Si estamos creando una nómina nueva (formulario)
+  if (showNominaForm && selectedObra) {
+    return (
+      <NominaForm
+        obraId={selectedObra.id}
+        obraName={selectedObra.nombre}
+        residenteName={user?.name || ''}
+        onSave={handleSaveNomina}
+        onCancel={() => setShowNominaForm(false)}
+      />
+    );
+  }
+  
+  // Si estamos viendo el detalle de una nómina específica
+  if (selectedNomina) {
+    return (
+      <NominaDetail
+        nomina={selectedNomina}
+        obra={obras.find(o => o.id === selectedNomina.obraId)}
+        currentUser={user}
+        onBack={() => setSelectedNomina(null)}
+        onValidar={handleValidarNomina}
+        onAutorizar={handleAutorizarNomina}
+        onPagar={handlePagarNomina}
+      />
+    );
+  }
         
         case 'caja-chica':
   if (showCajaChicaForm && selectedObra) {
