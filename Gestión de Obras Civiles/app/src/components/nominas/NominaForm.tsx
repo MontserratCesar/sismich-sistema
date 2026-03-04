@@ -10,11 +10,12 @@ interface NominaFormProps {
   obraId: string;
   obraName: string;
   residenteName: string;
+  residenteId: string;
   onSave: (nomina: any) => void;
   onCancel: () => void;
 }
 
-export function NominaForm({ obraId, obraName, residenteName, onSave, onCancel }: NominaFormProps) {
+export function NominaForm({ obraId, obraName, residenteName, residenteId, onSave, onCancel }: NominaFormProps) {
   const [semanaDel, setSemanaDel] = useState('');
   const [semanaAl, setSemanaAl] = useState('');
   const [numeroSemana, setNumeroSemana] = useState(1);
@@ -117,7 +118,9 @@ export function NominaForm({ obraId, obraName, residenteName, onSave, onCancel }
       empleados,
       totalNomina,
       elaboro: residenteName,
-      estado: 'pendiente'
+      estado: 'pendiente',
+      residenteId: obraId,
+      residenteName: residenteName,
     });
   };
 

@@ -407,6 +407,7 @@ function App() {
         obraId={selectedObra.id}
         obraName={selectedObra.nombre}
         residenteName={user?.name || ''}
+        residenteId={user?.id || ''}
         onSave={handleSaveNomina}
         onCancel={() => setShowNominaForm(false)}
       />
@@ -428,30 +429,81 @@ function App() {
     );
   }
         
-        case 'caja-chica':
-  if (showCajaChicaForm && selectedObra) {
+     case 'caja-chica':
+  // Si no hay obra seleccionada, mostrar selector primero (igual que nóminas)
+  if (!selectedObra) {
     return (
-      <CajaChicaForm
-        obraId={selectedObra.id}
-        obraName={selectedObra.nombre}
-        residenteName={user?.name || ''}
-        onSave={(data) => {
-          createCajaChica(data);
-          setShowCajaChicaForm(false);
-          toast.success('Caja chica registrada');
-        }}
-        onCancel={() => setShowCajaChicaForm(false)}
-      />
+      <div className="p-6 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Caja Chica - Gastos Indirectos</h2>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <p className="mb-4 text-gray-600">Selecciona una obra para registrar gastos:</p>
+          <select 
+            onChange={(e) => {
+              const obra = obras.find(o => o.id === e.target.value);
+              if (obra) {
+                setSelectedObra(obra);
+                toast.success(`Obra seleccionada: ${obra.nombre}`);
+              }
+            }}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:ring-2 focus:ring-green-500"
+            defaultValue=""
+          >
+            <option value="" disabled>-- Seleccionar obra --</option>
+            {obras.map(obra => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nombre} ({obra.ubicacion})
+              </option>
+            ))}
+          </select>
+          
+          {obras.length === 0 && (
+            <p className="mt-4 text-red-500 text-sm">
+              No hay obras registradas. Primero crea una obra en el menú "Obras".
+            </p>
+          )}
+        </div>
+      </div>
     );
   }
+
+  // Si HAY obra seleccionada pero NO estamos en el formulario
+  if (!showCajaChicaForm) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">Caja Chica</h2>
+            <p className="text-gray-600">{selectedObra.nombre}</p>
+          </div>
+          <Button 
+            onClick={() => setShowCajaChicaForm(true)} 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Nueva Semana de Gastos
+          </Button>
+        </div>
+        
+        {/* Aquí puedes agregar lista de cajas chicas existentes */}
+        <div className="bg-gray-50 p-8 rounded-lg text-center border-2 border-dashed border-gray-300">
+          <p className="text-gray-500">Selecciona "Nueva Semana" para registrar gastos indirectos</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar formulario
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Caja Chica - Gastos Indirectos</h2>
-      <Button onClick={() => setShowCajaChicaForm(true)} className="bg-green-600">
-        <Plus className="w-4 h-4 mr-2" /> Nueva Semana de Gastos
-      </Button>
-      {/* Aquí irá la lista de cajas chicas */}
-    </div>
+    <CajaChicaForm
+      obraId={selectedObra.id}
+      obraName={selectedObra.nombre}
+      residenteName={user?.name || ''}
+      onSave={(data) => {
+        createCajaChica(data);
+        setShowCajaChicaForm(false);
+        toast.success('Caja chica registrada');
+      }}
+      onCancel={() => setShowCajaChicaForm(false)}
+    />
   );
 
       case 'usuarios':
