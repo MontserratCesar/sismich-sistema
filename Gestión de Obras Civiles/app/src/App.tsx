@@ -229,7 +229,7 @@ function App() {
     if (!user) return null;
 
     // Obra Detail View
-    if (selectedObra) {
+    if (selectedObra && currentView === 'obras') {
       return (
         <ObraDetail
           obra={selectedObra}
@@ -351,12 +351,20 @@ function App() {
             <h2 className="text-2xl font-bold">Nóminas de la Obra</h2>
             <p className="text-gray-600">{selectedObra.nombre}</p>
           </div>
-          <Button 
-            onClick={() => setShowNominaForm(true)} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Nueva Nómina
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setSelectedObra(null)}  // ← BOTÓN PARA CAMBIAR DE OBRA
+            >
+              Cambiar Obra
+            </Button>
+            <Button 
+              onClick={() => setShowNominaForm(true)} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Nueva Nómina
+            </Button>
+          </div>
         </div>
 
         {/* Si hay nóminas existentes, mostrar lista simple */}
