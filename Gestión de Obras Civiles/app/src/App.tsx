@@ -17,10 +17,11 @@ import { useObras } from '@/hooks/useObras';
 import { useNominas } from '@/hooks/useNominas';
 import { useCajaChica } from '@/hooks/useCajaChica';
 import { useDocumentos } from '@/hooks/useDocumentos';
-import type { User, Obra, Nomina, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { UsuariosManager } from '@/components/usuarios/UsuariosManager';  // <UsuariosManager ... />
+import { PresupuestoForm } from '@/components/presupuesto/PresupuestoForm';
+import type { User, Obra, Nomina, NominaEmpleado, UserRole, CajaChica, GastoCajaChica, PresupuestoObra } from '@/types';
 
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
@@ -38,6 +39,7 @@ function App() {
   const [selectedNomina, setSelectedNomina] = useState<Nomina | null>(null);
   const [showNominaForm, setShowNominaForm] = useState(false);
   const [showCajaChicaForm, setShowCajaChicaForm] = useState(false);
+  const [showPresupuestoForm, setShowPresupuestoForm] = useState(false);
 
   const handleLogin = (username: string, password: string, role: UserRole): boolean => {
     const success = login(username, password, role);
@@ -189,6 +191,17 @@ function App() {
     updateObra(nomina.obraId, { 
       totalManoObra: totalManoObra 
     });
+  }
+};
+// Handle para presupuesto
+const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
+  if (selectedObra) {
+    updateObra(selectedObra.id, { 
+      presupuesto,
+      presupuestoTotal: presupuesto.totalPresupuesto 
+    });
+    toast.success('Presupuesto guardado exitosamente');
+    setShowPresupuestoForm(false);
   }
 };
 
@@ -513,6 +526,40 @@ function App() {
       onCancel={() => setShowCajaChicaForm(false)}
     />
   );
+
+  case 'presupuesto':
+  if (user?.role === 'admin' && selectedObra) {
+    if (showPresupuestoForm || !selectedObra.presupuesto) {
+      return (
+        <PresupuestoForm
+          obraId={selectedObra.id}
+          obraName={selectedObra.nombre}
+          presupuestoExistente={selectedObra.presupuesto}
+          onSave={handleSavePresupuesto}
+          onCancel={() => {
+            setShowPresupuestoForm(false);
+            if (!selectedObra.presupuesto) setSelectedObra(null);
+          }}
+        />
+      );
+    }
+    // Vista de presupuesto guardado (resumen)
+    return (
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Presupuesto de {selectedObra.nombre}</h2>
+          <Button onClick={() => setShowPresupuestoForm(true)} className="bg-blue-600">
+            Editar Presupuesto
+          </Button>
+        </div>
+        {/* Aquí iría una vista de resumen del presupuesto */}
+        <pre className="bg-gray-100 p-4 rounded overflow-auto">
+          {JSON.stringify(selectedObra.presupuesto, null, 2)}
+        </pre>
+      </div>
+    );
+  }
+  return null;  
 
       case 'usuarios':
         if (user.role === 'admin') {

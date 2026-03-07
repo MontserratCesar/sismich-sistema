@@ -267,7 +267,7 @@ export function useObrasNuevo() {
     const totalManoObraPres = obras.reduce((sum, o) => sum + o.presupuesto.sumaManoObra, 0);
     const totalManoObraReal = obras.reduce((sum, o) => sum + o.gastoRealManoObra, 0);
     
-    const totalEquipoPres = obras.reduce((sum, o) => sum + o.presupuesto.sumaEquipoHerramienta, 0);
+    const totalEquipoPres = obras.reduce((sum, o) => sum + (o.presupuesto?.sumaEquipo || 0), 0);
     const totalEquipoReal = obras.reduce((sum, o) => sum + o.gastoRealEquipo, 0);
 
     return {

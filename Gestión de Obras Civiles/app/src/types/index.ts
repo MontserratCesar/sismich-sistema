@@ -45,13 +45,11 @@ export interface PresupuestoObra {
   sumaMateriales: number;
   sumaManoObra: number;
   sumaEquipo?: number;
-  sumaEquipoHerramienta?: number;
   costoDirecto: number;
   indirectos: number;
   indirectosPorcentaje?: number;
-  indirectosMonto?: number;
-  utilidadPorcentaje?: number;
   utilidadMonto?: number;
+  utilidadPorcentaje?: number;
   totalPresupuesto: number;
 }
 
