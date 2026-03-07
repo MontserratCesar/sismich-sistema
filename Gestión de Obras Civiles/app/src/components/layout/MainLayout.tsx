@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
   { id: 'documentos', label: 'Documentos', icon: FileText, roles: ['admin', 'residente', 'contadora'] },
   { id: 'usuarios', label: 'Usuarios', icon: Users, roles: ['admin'] },
   { id: 'configuracion', label: 'Configuración', icon: Settings, roles: ['admin'] },
-  { id: 'presupuesto', label: 'Presupuesto', icon: Calculator, roles: ['admin'] },
+  { id: 'presupuesto', label: 'Presupuesto', icon: Calculator, roles: ['admin', 'residente'] },
 ];
 
 export function MainLayout({ user, onLogout, children, currentView, onViewChange }: MainLayoutProps) {

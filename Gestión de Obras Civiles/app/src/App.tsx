@@ -528,7 +528,45 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
   );
 
   case 'presupuesto':
-  if (user?.role === 'admin' && selectedObra) {
+  // Permitir admin y residente (quitar la restricción de solo admin)
+  if (!selectedObra) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Presupuesto de Obra</h2>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <p className="mb-4 text-gray-600">Selecciona una obra para ver o crear el presupuesto:</p>
+          <select 
+            onChange={(e) => {
+              const obra = obras.find(o => o.id === e.target.value);
+              if (obra) {
+                setSelectedObra(obra);
+                toast.success(`Obra seleccionada: ${obra.nombre}`);
+              }
+            }}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
+            defaultValue=""
+          >
+            <option value="" disabled>-- Seleccionar obra --</option>
+            {obras.map(obra => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nombre} ({obra.ubicacion})
+              </option>
+            ))}
+          </select>
+          
+          {obras.length === 0 && (
+            <p className="mt-4 text-red-500 text-sm">
+              No hay obras registradas. Primero crea una obra en el menú "Obras".
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Si hay obra seleccionada, mostrar formulario o resumen
+  if (selectedObra) {
+    // Si no tiene presupuesto o se quiere editar, mostrar formulario
     if (showPresupuestoForm || !selectedObra.presupuesto) {
       return (
         <PresupuestoForm
@@ -538,28 +576,71 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
           onSave={handleSavePresupuesto}
           onCancel={() => {
             setShowPresupuestoForm(false);
-            if (!selectedObra.presupuesto) setSelectedObra(null);
+            // Solo limpiar selectedObra si estamos en la vista de presupuesto y cancelamos
+            // y no hay presupuesto guardado aún
+            if (!selectedObra.presupuesto) {
+              setSelectedObra(null);
+            }
           }}
         />
       );
     }
-    // Vista de presupuesto guardado (resumen)
+    
+    // Vista de resumen del presupuesto ya guardado
     return (
-      <div className="p-6">
+      <div className="p-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Presupuesto de {selectedObra.nombre}</h2>
-          <Button onClick={() => setShowPresupuestoForm(true)} className="bg-blue-600">
-            Editar Presupuesto
-          </Button>
+          <div>
+            <h2 className="text-2xl font-bold">Presupuesto de la Obra</h2>
+            <p className="text-gray-600">{selectedObra.nombre}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setSelectedObra(null)}
+            >
+              Cambiar Obra
+            </Button>
+            <Button 
+              onClick={() => setShowPresupuestoForm(true)} 
+              className="bg-blue-600"
+            >
+              Editar Presupuesto
+            </Button>
+          </div>
         </div>
-        {/* Aquí iría una vista de resumen del presupuesto */}
-        <pre className="bg-gray-100 p-4 rounded overflow-auto">
-          {JSON.stringify(selectedObra.presupuesto, null, 2)}
-        </pre>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          {selectedObra.presupuesto ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded">
+                  <p className="text-sm text-gray-600">Materiales</p>
+                  <p className="text-xl font-bold">${selectedObra.presupuesto.sumaMateriales?.toLocaleString('es-MX')}</p>
+                </div>
+                <div className="bg-orange-50 p-4 rounded">
+                  <p className="text-sm text-gray-600">Mano de Obra</p>
+                  <p className="text-xl font-bold">${selectedObra.presupuesto.sumaManoObra?.toLocaleString('es-MX')}</p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded">
+                  <p className="text-sm text-gray-600">Equipo</p>
+                  <p className="text-xl font-bold">${selectedObra.presupuesto.sumaEquipo?.toLocaleString('es-MX') || 0}</p>
+                </div>
+                <div className="bg-gray-900 text-white p-4 rounded">
+                  <p className="text-sm text-gray-300">Total Presupuesto</p>
+                  <p className="text-2xl font-bold">${selectedObra.presupuesto.totalPresupuesto?.toLocaleString('es-MX')}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center">No hay presupuesto guardado para esta obra.</p>
+          )}
+        </div>
       </div>
     );
   }
-  return null;  
+  
+  return null;
 
       case 'usuarios':
         if (user.role === 'admin') {
