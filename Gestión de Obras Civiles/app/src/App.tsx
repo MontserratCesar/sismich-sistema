@@ -528,7 +528,7 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
   );
 
   case 'presupuesto':
-  // Permitir admin y residente (quitar la restricción de solo admin)
+  // 1. Si no hay obra seleccionada, mostrar selector
   if (!selectedObra) {
     return (
       <div className="p-6 max-w-2xl mx-auto">
@@ -540,6 +540,7 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
               const obra = obras.find(o => o.id === e.target.value);
               if (obra) {
                 setSelectedObra(obra);
+                setShowPresupuestoForm(false); // Resetear estado
                 toast.success(`Obra seleccionada: ${obra.nombre}`);
               }
             }}
@@ -564,83 +565,117 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
     );
   }
 
-  // Si hay obra seleccionada, mostrar formulario o resumen
-  if (selectedObra) {
-    // Si no tiene presupuesto o se quiere editar, mostrar formulario
-    if (showPresupuestoForm || !selectedObra.presupuesto) {
-      return (
-        <PresupuestoForm
-          obraId={selectedObra.id}
-          obraName={selectedObra.nombre}
-          presupuestoExistente={selectedObra.presupuesto}
-          onSave={handleSavePresupuesto}
-          onCancel={() => {
-            setShowPresupuestoForm(false);
-            // Solo limpiar selectedObra si estamos en la vista de presupuesto y cancelamos
-            // y no hay presupuesto guardado aún
-            if (!selectedObra.presupuesto) {
-              setSelectedObra(null);
-            }
-          }}
-        />
-      );
-    }
-    
-    // Vista de resumen del presupuesto ya guardado
+  // 2. Si HAY obra seleccionada y queremos editar/crear (showPresupuestoForm es true O no existe presupuesto)
+  // IMPORTANTE: Esta condición debe ir ANTES que la vista de resumen
+  if (showPresupuestoForm === true || !selectedObra.presupuesto || Object.keys(selectedObra.presupuesto || {}).length === 0) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">Presupuesto de la Obra</h2>
-            <p className="text-gray-600">{selectedObra.nombre}</p>
+      <PresupuestoForm
+        obraId={selectedObra.id}
+        obraName={selectedObra.nombre}
+        presupuestoExistente={selectedObra.presupuesto}
+        onSave={handleSavePresupuesto}
+        onCancel={() => {
+          setShowPresupuestoForm(false);
+          // Si cancelamos y no hay presupuesto guardado, volver al selector
+          if (!selectedObra.presupuesto || Object.keys(selectedObra.presupuesto || {}).length === 0) {
+            setSelectedObra(null);
+          }
+        }}
+      />
+    );
+  }
+
+  // 3. Si HAY obra seleccionada y YA TIENE presupuesto guardado - mostrar resumen
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Presupuesto de la Obra</h2>
+          <p className="text-gray-600">{selectedObra.nombre}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              setSelectedObra(null);
+              setShowPresupuestoForm(false);
+            }}
+          >
+            Cambiar Obra
+          </Button>
+          <Button 
+            onClick={() => setShowPresupuestoForm(true)} 
+            className="bg-blue-600"
+          >
+            {selectedObra.presupuesto ? 'Editar Presupuesto' : 'Crear Presupuesto'}
+          </Button>
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow p-6">
+        {selectedObra.presupuesto && selectedObra.presupuesto.totalPresupuesto > 0 ? (
+          <div className="space-y-6">
+            {/* Tarjetas de resumen */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Materiales</p>
+                <p className="text-xl font-bold text-blue-900">
+                  ${(selectedObra.presupuesto.sumaMateriales || 0).toLocaleString('es-MX')}
+                </p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Mano de Obra</p>
+                <p className="text-xl font-bold text-orange-900">
+                  ${(selectedObra.presupuesto.sumaManoObra || 0).toLocaleString('es-MX')}
+                </p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Equipo</p>
+                <p className="text-xl font-bold text-purple-900">
+                  ${(selectedObra.presupuesto.sumaEquipo || 0).toLocaleString('es-MX')}
+                </p>
+              </div>
+              <div className="bg-gray-900 text-white p-4 rounded-lg">
+                <p className="text-sm text-gray-300 mb-1">Total Presupuesto</p>
+                <p className="text-2xl font-bold">
+                  ${(selectedObra.presupuesto.totalPresupuesto || 0).toLocaleString('es-MX')}
+                </p>
+              </div>
+            </div>
+            
+            {/* Detalle adicional */}
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3">Desglose</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Costo Directo:</span>
+                  <span className="font-mono">${(selectedObra.presupuesto.costoDirecto || 0).toLocaleString('es-MX')}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Indirectos ({selectedObra.presupuesto.indirectosPorcentaje || 10}%):</span>
+                  <span className="font-mono">${(selectedObra.presupuesto.indirectos || 0).toLocaleString('es-MX')}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">Utilidad ({selectedObra.presupuesto.utilidadPorcentaje || 8}%):</span>
+                  <span className="font-mono">${(selectedObra.presupuesto.utilidadMonto || 0).toLocaleString('es-MX')}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => setSelectedObra(null)}
-            >
-              Cambiar Obra
-            </Button>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">Esta obra no tiene presupuesto registrado.</p>
             <Button 
               onClick={() => setShowPresupuestoForm(true)} 
               className="bg-blue-600"
             >
-              Editar Presupuesto
+              Crear Presupuesto Ahora
             </Button>
           </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          {selectedObra.presupuesto ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Materiales</p>
-                  <p className="text-xl font-bold">${selectedObra.presupuesto.sumaMateriales?.toLocaleString('es-MX')}</p>
-                </div>
-                <div className="bg-orange-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Mano de Obra</p>
-                  <p className="text-xl font-bold">${selectedObra.presupuesto.sumaManoObra?.toLocaleString('es-MX')}</p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Equipo</p>
-                  <p className="text-xl font-bold">${selectedObra.presupuesto.sumaEquipo?.toLocaleString('es-MX') || 0}</p>
-                </div>
-                <div className="bg-gray-900 text-white p-4 rounded">
-                  <p className="text-sm text-gray-300">Total Presupuesto</p>
-                  <p className="text-2xl font-bold">${selectedObra.presupuesto.totalPresupuesto?.toLocaleString('es-MX')}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center">No hay presupuesto guardado para esta obra.</p>
-          )}
-        </div>
+        )}
       </div>
-    );
-  }
-  
-  return null;
+    </div>
+  );
 
       case 'usuarios':
         if (user.role === 'admin') {
