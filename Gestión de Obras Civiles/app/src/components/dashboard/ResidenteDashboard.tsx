@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { Obra, Nomina, User } from '@/types';
 import { useDashboard } from '@/hooks/useDashboard';
+import { AlertasObra } from '@/components/alertas/AlertasObra';
 
 interface ResidenteDashboardProps {
   user: User;
@@ -167,10 +168,13 @@ export function ResidenteDashboard({ user, obras, nominas, onViewObra, onCreateN
                     </Button>
                   </div>
                   
+                  {/* ALERTA INTELIGENTE - AGREGADA AQUÍ */}
+                  <AlertasObra obra={obra} />
+                  
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                     <div>
                       <p className="text-xs text-gray-500">Presupuesto</p>
-                      <p className="font-medium text-gray-900">formatCurrency(obra.presupuesto.totalPresupuesto)</p>
+                      <p className="font-medium text-gray-900">{formatCurrency(obra.presupuesto?.totalPresupuesto || 0)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Avance Físico</p>

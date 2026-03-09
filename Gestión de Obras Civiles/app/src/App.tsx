@@ -21,12 +21,13 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { UsuariosManager } from '@/components/usuarios/UsuariosManager';  // <UsuariosManager ... />
 import { PresupuestoForm } from '@/components/presupuesto/PresupuestoForm';
-import type { User, Obra, Nomina, NominaEmpleado, UserRole, CajaChica, GastoCajaChica, PresupuestoObra } from '@/types';
+import type { User, Obra, Nomina, NominaEmpleado, UserRole, CajaChica, GastoCajaChica, PresupuestoObra, RegistroAvanceSemanal } from '@/types';
+import { AvanceSemanalForm } from '@/components/avance/AvanceSemanalForm';
 
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
   const { users, createUser, updateUser, deleteUser, resetPassword } = useUsers();
-  const { obras, createObra, updateObra, deleteObra } = useObras();
+  const { obras, createObra, updateObra, deleteObra, agregarAvanceSemanal } = useObras();
   const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina, getNominasByObra, getTotalPagadoByObra } = useNominas();
   
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
@@ -40,6 +41,7 @@ function App() {
   const [showNominaForm, setShowNominaForm] = useState(false);
   const [showCajaChicaForm, setShowCajaChicaForm] = useState(false);
   const [showPresupuestoForm, setShowPresupuestoForm] = useState(false);
+  const [showAvanceForm, setShowAvanceForm] = useState(false);
 
   const handleLogin = (username: string, password: string, role: UserRole): boolean => {
     const success = login(username, password, role);
@@ -202,6 +204,14 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
     });
     toast.success('Presupuesto guardado exitosamente');
     setShowPresupuestoForm(false);
+  }
+};
+
+const handleGuardarAvance = (avance: RegistroAvanceSemanal) => {
+  if (selectedObra) {
+    agregarAvanceSemanal(selectedObra.id, avance);
+    toast.success(`Avance semana ${avance.semana} guardado`);
+    setShowAvanceForm(false);
   }
 };
 
@@ -658,6 +668,101 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
             <p className="text-2xl font-bold">${(selectedObra.presupuesto?.totalPresupuesto || 0).toLocaleString()}</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  case 'avance':
+  if (!selectedObra) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Reporte de Avance Físico</h2>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <p className="mb-4 text-gray-600">Selecciona una obra para reportar avance:</p>
+          <select 
+            onChange={(e) => {
+              const obra = obras.find(o => o.id === e.target.value);
+              if (obra) {
+                setSelectedObra(obra);
+                setShowAvanceForm(false);
+              }
+            }}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500"
+            defaultValue=""
+          >
+            <option value="" disabled>-- Seleccionar obra --</option>
+            {obras.map(obra => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  }
+
+  if (showAvanceForm) {
+    const semanaActual = (selectedObra.semanaActualReporte || 0) + 1;
+    return (
+      <AvanceSemanalForm
+        obra={selectedObra}
+        semanaNumero={semanaActual}
+        onSave={handleGuardarAvance}
+        onCancel={() => setShowAvanceForm(false)}
+      />
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Avance Físico</h2>
+          <p className="text-gray-600">{selectedObra.nombre}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setSelectedObra(null)}
+          >
+            Cambiar Obra
+          </Button>
+          <Button 
+            onClick={() => setShowAvanceForm(true)} 
+            className="bg-indigo-600"
+          >
+            Reportar Avance Semanal
+          </Button>
+        </div>
+      </div>
+
+      {/* Mostrar historial de avances */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-bold mb-4">Historial de Avances</h3>
+        {selectedObra.registrosAvance && selectedObra.registrosAvance.length > 0 ? (
+          <div className="space-y-3">
+            {selectedObra.registrosAvance
+              .sort((a, b) => b.semana - a.semana)
+              .map((registro) => (
+                <div key={registro.semana} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold">Semana {registro.semana}</p>
+                    <p className="text-sm text-gray-500">{registro.semanaDel} al {registro.semanaAl}</p>
+                    {registro.notas && (
+                      <p className="text-sm text-gray-600 mt-1">{registro.notas}</p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-indigo-600">+{registro.porcentajeEstaSemana}%</p>
+                    <p className="text-sm text-gray-500">Acumulado: {registro.porcentajeAcumulado}%</p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No hay registros de avance. Reporta la primera semana.</p>
+        )}
       </div>
     </div>
   );

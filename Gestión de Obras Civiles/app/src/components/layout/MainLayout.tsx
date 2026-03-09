@@ -17,6 +17,7 @@ import {
   Bell,
   User,
   Calculator,
+  TrendingUp,
 } from 'lucide-react';
 import type { User as UserType, UserRole } from '@/types';
 
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
   { id: 'usuarios', label: 'Usuarios', icon: Users, roles: ['admin'] },
   { id: 'configuracion', label: 'Configuración', icon: Settings, roles: ['admin'] },
   { id: 'presupuesto', label: 'Presupuesto', icon: Calculator, roles: ['admin', 'residente'] },
+  { id: 'avance', label: 'Avance Físico', icon: TrendingUp, roles: ['admin', 'residente'] },
 ];
 
 export function MainLayout({ user, onLogout, children, currentView, onViewChange }: MainLayoutProps) {

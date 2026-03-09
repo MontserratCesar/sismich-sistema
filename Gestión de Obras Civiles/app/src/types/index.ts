@@ -67,9 +67,11 @@ export interface Obra {
   estado: EstadoObra;
   semanaActualReporte?: number;
   
+  
   // ✅ CAMBIO: Ahora presupuesto es el objeto
   presupuesto: PresupuestoObra;
   presupuestoTotal?: number;  // Opcional, por si necesitas el total como número separado
+  registrosAvance?: RegistroAvanceSemanal[]; 
   
   // ... resto de campos (totalManoObra, gastoRealMateriales, etc.)
   totalManoObra?: number;
