@@ -33,6 +33,7 @@ import { CajaChicaForm } from '@/components/caja-chica/CajaChicaForm';
 import { PresupuestoForm } from '@/components/presupuesto/PresupuestoForm';
 import { AvanceSemanalForm } from '@/components/avance/AvanceSemanalForm';
 import { NominaDetail } from '@/components/nominas/NominaDetail';
+import { MaterialesManager } from '@/components/materiales/MaterialesManager';
 
 interface ObraWorkspaceProps {
   obra: Obra;
@@ -502,46 +503,16 @@ export function ObraWorkspace({
         );
 
       case 'materiales':
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Materiales</h2>
-              <Button className="bg-orange-600">+ Nueva Requisición</Button>
-            </div>
-            
-            {/* Placeholder para el módulo de materiales */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="font-bold mb-4">Requisiciones Pendientes</h3>
-              <div className="bg-gray-50 p-8 rounded-lg text-center border-2 border-dashed border-gray-300">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Módulo de Requisiciones de Materiales</p>
-                <p className="text-sm text-gray-400 mt-2">Integración con Excel "Requisición de Materiales" y "Cálculo de Materiales"</p>
-              </div>
-            </div>
-
-            {/* Calculadora de materiales (placeholder) */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="font-bold mb-4">Calculadora de Materiales</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Calcula cantidades exactas considerando desperdicio (ej: 10% para láminas, 4% para concreto).
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <p className="font-semibold text-sm">Láminas y Soleras</p>
-                  <p className="text-xs text-gray-500">Cálculo por área + desperdicio</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="font-semibold text-sm">Concreto</p>
-                  <p className="text-xs text-gray-500">Volumen + resistencia (200kg/cm²)</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="font-semibold text-sm">Varillas</p>
-                  <p className="text-xs text-gray-500">Longitudes y diámetros</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+  return (
+    <MaterialesManager 
+      obra={obra} 
+      onGuardarRequisicion={(req) => {
+        // Aquí conectas con tu backend/hook cuando lo tengas listo
+        console.log('Requisición guardada:', req);
+        toast.success('Requisición guardada. Pendiente de aprobación.');
+      }}
+    />
+  );
 
       case 'equipos':
         return (

@@ -317,17 +317,22 @@ const handleGuardarAvance = (avance: RegistroAvanceSemanal) => {
         return null;
 
       case 'obras':
-        return (
-          <ObrasManager
-            obras={obras}
-            users={users}
-            currentUser={user}
-            onCreate={handleCreateObra}
-            onUpdate={handleUpdateObra}
-            onDelete={handleDeleteObra}
-            onViewDetail={handleViewObra}
-          />
-        );
+  // FIX: Filtrar obras según rol
+  const obrasVisibles = user.role === 'residente' 
+    ? obras.filter(o => o.residenteId === user.id)
+    : obras; // Admin y Contadora ven TODO
+
+  return (
+    <ObrasManager
+      obras={obrasVisibles}
+      users={users}
+      currentUser={user}
+      onCreate={handleCreateObra}
+      onUpdate={handleUpdateObra}
+      onDelete={handleDeleteObra}
+      onViewDetail={handleViewObra}
+    />
+  );
 
         case 'obra-workspace':
   if (!selectedObra) return null; // o redirigir a 'obras'

@@ -1,280 +1,331 @@
-import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import { 
   Building2, 
-  DollarSign, 
-  Users, 
-  Clock,
-  CheckCircle2,
-  FileText,
-  Plus,
-  ArrowRight
+  AlertCircle, 
+  CheckCircle2, 
+  Clock, 
+  Wallet, 
+  TrendingUp,
+  ArrowRight,
+  Calendar,
+  HardHat
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Obra, Nomina, User } from '@/types';
-import { useDashboard } from '@/hooks/useDashboard';
-import { AlertasObra } from '@/components/alertas/AlertasObra';
 
 interface ResidenteDashboardProps {
   user: User;
   obras: Obra[];
   nominas: Nomina[];
   onViewObra: (obraId: string) => void;
-  onCreateNomina: () => void;
+  onCreateNomina?: () => void;
 }
 
-export function ResidenteDashboard({ user, obras, nominas, onViewObra, onCreateNomina }: ResidenteDashboardProps) {
-  const { getObraFinanzas } = useDashboard();
+interface AlertaAccion {
+  id: string;
+  obraId: string;
+  obraName: string;
+  tipo: 'cierre' | 'nomina' | 'avance' | 'caja' | 'documento';
+  mensaje: string;
+  severidad: 'alta' | 'media' | 'baja';
+  accionLabel: string;
+}
 
-  const misObras = useMemo(() => 
-    obras.filter(o => o.residenteId === user.id),
-    [obras, user.id]
-  );
+export function ResidenteDashboard({ 
+  user, 
+  obras, 
+  nominas, 
+  onViewObra 
+}: ResidenteDashboardProps) {
+  
+  const [alertas, setAlertas] = useState<AlertaAccion[]>([]);
+  
+  // Filtrar obras del residente
+  const misObras = obras.filter(o => o.residenteId === user.id && o.estado === 'activa');
+  
+  useEffect(() => {
+    const nuevasAlertas: AlertaAccion[] = [];
+    const hoy = new Date();
+    const diaSemana = hoy.getDay(); // 0=Dom, 5=Viernes, 6=Sab
+    
+    misObras.forEach(obra => {
+      // 1. Alerta de Cierre de Semana (Viernes o Sábado si no cerró)
+      if (diaSemana === 5 || diaSemana === 6) {
+        // Verificar si ya existe nómina para esta semana
+        const semanaActual = obra.semanaActualReporte || 0;
+        const nominaExistente = nominas.some(n => 
+          n.obraId === obra.id && n.numeroSemana === semanaActual + 1
+        );
+        
+        if (!nominaExistente) {
+          nuevasAlertas.push({
+            id: `cierre-${obra.id}`,
+            obraId: obra.id,
+            obraName: obra.nombre,
+            tipo: 'cierre',
+            mensaje: '¡Es viernes! Debes cerrar la semana y generar la nómina',
+            severidad: 'alta',
+            accionLabel: 'Cerrar Semana Ahora'
+          });
+        }
+      }
+      
+      // 2. Alerta de Avance Físico (Si lleva más de 7 días sin reportar)
+      const ultimoAvance = obra.registrosAvance?.[obra.registrosAvance.length - 1];
+      if (ultimoAvance) {
+        const fechaUltimo = new Date(ultimoAvance.fechaReporte || obra.fechaInicio);
+        const diasDiff = Math.floor((hoy.getTime() - fechaUltimo.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diasDiff > 7) {
+          nuevasAlertas.push({
+            id: `avance-${obra.id}`,
+            obraId: obra.id,
+            obraName: obra.nombre,
+            tipo: 'avance',
+            mensaje: `Llevas ${diasDiff} días sin reportar avance físico`,
+            severidad: 'media',
+            accionLabel: 'Reportar Avance'
+          });
+        }
+      }
+      
+      // 3. Alerta de Caja Chica (Si no hay registro de esta semana)
+      // (Aquí conectarías con tu hook de caja chica)
+      
+      // 4. Obra sin presupuesto
+      if (!obra.presupuesto?.totalPresupuesto) {
+        nuevasAlertas.push({
+          id: `presupuesto-${obra.id}`,
+          obraId: obra.id,
+          obraName: obra.nombre,
+          tipo: 'documento',
+          mensaje: 'Obra sin presupuesto registrado',
+          severidad: 'alta',
+          accionLabel: 'Agregar Presupuesto'
+        });
+      }
+    });
+    
+    setAlertas(nuevasAlertas);
+  }, [misObras, nominas]);
 
-  const misNominas = useMemo(() => 
-    nominas.filter(n => n.residenteId === user.id),
-    [nominas, user.id]
-  );
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+  const getIconoAlerta = (tipo: string) => {
+    switch(tipo) {
+      case 'cierre': return <Clock className="w-5 h-5 text-red-600" />;
+      case 'avance': return <TrendingUp className="w-5 h-5 text-orange-600" />;
+      case 'caja': return <Wallet className="w-5 h-5 text-yellow-600" />;
+      default: return <AlertCircle className="w-5 h-5 text-blue-600" />;
+    }
   };
 
-  const totalManoObra = misNominas
-    .filter(n => n.estado === 'pagada' || n.estado === 'autorizada')
-    .reduce((sum, n) => sum + n.totalNomina, 0);
+  const getColorAlerta = (severidad: string) => {
+    switch(severidad) {
+      case 'alta': return 'border-l-4 border-red-500 bg-red-50';
+      case 'media': return 'border-l-4 border-orange-500 bg-orange-50';
+      default: return 'border-l-4 border-blue-500 bg-blue-50';
+    }
+  };
+
+  // Calcular estadísticas
+  const obrasActivas = misObras.length;
+  const avancePromedio = misObras.length > 0 
+    ? misObras.reduce((acc, o) => acc + (o.avanceFisicoGlobal || 0), 0) / misObras.length 
+    : 0;
+  
+  const nominasPendientes = nominas.filter(n => 
+    misObras.some(o => o.id === n.obraId) && n.estado === 'pendiente'
+  ).length;
 
   return (
-    <div className="space-y-6">
-      {/* Welcome */}
+    <div className="space-y-6 p-6">
+      {/* Header de Bienvenida */}
       <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg">
-        <h2 className="text-2xl font-bold mb-2">¡Bienvenido, {user.name}!</h2>
-        <p className="text-amber-100">Residente de Obra - Panel de Control</p>
+        <h1 className="text-3xl font-bold mb-2">¡Hola, {user.name}!</h1>
+        <p className="text-amber-100">Tienes {alertas.length} acciones pendientes para hoy</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Mis Obras</p>
-                <p className="text-3xl font-bold text-gray-900">{misObras.length}</p>
+                <p className="text-sm text-gray-600">Mis Obras Activas</p>
+                <p className="text-3xl font-bold text-gray-900">{obrasActivas}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-blue-600" />
-              </div>
+              <Building2 className="w-8 h-8 text-blue-600" />
             </div>
-            <div className="mt-4 text-sm text-gray-500">
-              {misObras.filter(o => o.estado === 'activa').length} activas
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Avance Promedio</p>
+                <p className="text-3xl font-bold text-gray-900">{avancePromedio.toFixed(1)}%</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Mano de Obra</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalManoObra)}</p>
+                <p className="text-sm text-gray-600">Nóminas Pendientes</p>
+                <p className="text-3xl font-bold text-gray-900">{nominasPendientes}</p>
               </div>
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              Total en nóminas pagadas
+              <Clock className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Nóminas Pendientes</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {misNominas.filter(n => n.estado === 'pendiente').length}
+                <p className="text-sm text-gray-600">Día de Hoy</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                <Clock className="w-6 h-6 text-amber-600" />
-              </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              Por validar
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Nóminas Validadas</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {misNominas.filter(n => n.estado === 'validada').length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              En espera de autorización
+              <Calendar className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Mis Obras */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-4 flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="w-5 h-5 text-amber-500" />
-            Mis Obras
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {misObras.map(obra => {
-              const finanzas = getObraFinanzas(obra, nominas);
-              const obraNominas = nominas.filter(n => n.obraId === obra.id);
-              return (
-                <div 
-                  key={obra.id} 
-                  className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => onViewObra(obra.id)}
-                >
-                  <div className="flex items-center justify-between mb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Columna de Alertas Accionables */}
+        <div className="lg:col-span-2 space-y-4">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            Acciones Urgentes
+          </h2>
+          
+          {alertas.length === 0 ? (
+            <Card className="p-8 text-center bg-green-50 border-green-200">
+              <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <p className="text-green-800 font-medium">¡Todo al día!</p>
+              <p className="text-sm text-green-600">No tienes acciones pendientes por ahora.</p>
+            </Card>
+          ) : (
+            alertas.map(alerta => (
+              <div key={alerta.id} className={`p-4 rounded-lg shadow-sm ${getColorAlerta(alerta.severidad)}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    {getIconoAlerta(alerta.tipo)}
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-gray-900">{obra.nombre}</p>
-                        <Badge variant={obra.estado === 'activa' ? 'default' : 'secondary'}>
-                          {obra.estado}
-                        </Badge>
-                      </div>
+                      <p className="font-bold text-gray-900">{alerta.obraName}</p>
+                      <p className="text-sm text-gray-700 mt-1">{alerta.mensaje}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={() => onViewObra(alerta.obraId)}
+                    className="flex-shrink-0"
+                  >
+                    {alerta.accionLabel}
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Lista de Obras Rápida */}
+          <h2 className="text-xl font-bold mt-8 mb-4 flex items-center gap-2">
+            <HardHat className="w-5 h-5 text-amber-600" />
+            Acceso Rápido a Obras
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {misObras.map(obra => (
+              <Card 
+                key={obra.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => onViewObra(obra.id)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-gray-900">{obra.nombre}</h3>
                       <p className="text-sm text-gray-500">{obra.ubicacion}</p>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      Ver detalles <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
+                    <ArrowRight className="w-5 h-5 text-gray-400" />
                   </div>
-                  
-                  {/* ALERTA INTELIGENTE - AGREGADA AQUÍ */}
-                  <AlertasObra obra={obra} />
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                    <div>
-                      <p className="text-xs text-gray-500">Presupuesto</p>
-                      <p className="font-medium text-gray-900">{formatCurrency(obra.presupuesto?.totalPresupuesto || 0)}</p>
+                  <div className="mt-4">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Avance Físico</span>
+                      <span className="font-bold">{obra.avanceFisicoGlobal || 0}%</span>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Avance Físico</p>
-                      <div className="flex items-center gap-2">
-                        <Progress value={finanzas.avanceFisico} className="h-2 flex-1" />
-                        <span className="text-sm">{finanzas.avanceFisico.toFixed(0)}%</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Mano de Obra</p>
-                      <p className="font-medium text-gray-900">{formatCurrency(finanzas.manoObraTotal)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Nóminas</p>
-                      <p className="font-medium text-gray-900">{obraNominas.length}</p>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-amber-500 h-2 rounded-full"
+                        style={{ width: `${obra.avanceFisicoGlobal || 0}%` }}
+                      />
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            {misObras.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Building2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No tienes obras asignadas</p>
-              </div>
-            )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Mis Nóminas Recientes */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-4 flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <DollarSign className="w-5 h-5 text-amber-500" />
-            Mis Nóminas Recientes
-          </CardTitle>
-          <Button onClick={onCreateNomina} className="bg-amber-500 hover:bg-amber-600">
-            <Plus className="w-4 h-4 mr-2" />
-            Nueva Nómina
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {misNominas.slice(0, 5).map(nomina => (
-              <div 
-                key={nomina.id} 
-                className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    nomina.estado === 'pagada' ? 'bg-emerald-100' :
-                    nomina.estado === 'autorizada' ? 'bg-purple-100' :
-                    nomina.estado === 'validada' ? 'bg-blue-100' :
-                    'bg-amber-100'
-                  }`}>
-                    <DollarSign className={`w-5 h-5 ${
-                      nomina.estado === 'pagada' ? 'text-emerald-600' :
-                      nomina.estado === 'autorizada' ? 'text-purple-600' :
-                      nomina.estado === 'validada' ? 'text-blue-600' :
-                      'text-amber-600'
-                    }`} />
+        {/* Columna Lateral - Resumen */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Tu Progreso Semanal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+                    {misObras.length}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">
-                      Semana del {new Date(nomina.semanaDel).toLocaleDateString('es-MX')}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {nomina.obraName} • {nomina.empleados.length} empleados
-                    </p>
+                    <p className="font-medium">Obras Activas</p>
+                    <p className="text-xs text-gray-500">En tu responsabilidad</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">{formatCurrency(nomina.totalNomina)}</p>
-                    <Badge variant="outline" className={
-                      nomina.estado === 'pagada' ? 'text-emerald-600 border-emerald-200' :
-                      nomina.estado === 'autorizada' ? 'text-purple-600 border-purple-200' :
-                      nomina.estado === 'validada' ? 'text-blue-600 border-blue-200' :
-                      'text-amber-600 border-amber-200'
-                    }>
-                      {nomina.estado}
-                    </Badge>
+                
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-sm">
+                    {nominas.filter(n => n.estado === 'pagada' && misObras.some(o => o.id === n.obraId)).length}
+                  </div>
+                  <div>
+                    <p className="font-medium">Nóminas Pagadas</p>
+                    <p className="text-xs text-gray-500">Este mes</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
+                    {nominas.filter(n => n.estado === 'validada' && misObras.some(o => o.id === n.obraId)).length}
+                  </div>
+                  <div>
+                    <p className="font-medium">En Validación</p>
+                    <p className="text-xs text-gray-500">Esperando contadora</p>
                   </div>
                 </div>
               </div>
-            ))}
-            {misNominas.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No has creado ninguna nómina</p>
-                <Button onClick={onCreateNomina} variant="outline" className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Crear primera nómina
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Tip del día */}
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="p-4">
+              <p className="text-sm text-amber-800">
+                <strong>💡 Tip:</strong> Recuerda subir las fotos del avance físico al cerrar la semana. Esto ayuda a la contadora a validar los pagos más rápido.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
