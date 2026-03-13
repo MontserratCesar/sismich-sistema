@@ -217,3 +217,109 @@ export interface RegistroAvanceSemanal {
   porcentajeAvance?: number; 
   notas?: string;
 }
+
+// Agregar al final de types/index.ts
+
+// MATERIALES
+export interface MaterialRequerido {
+  id: string;
+  clave?: string;
+  partida: string;
+  concepto: string;
+  descripcion: string;
+  unidad: string;
+  cantidadRequerida: number;
+  observaciones?: string;
+}
+
+export interface RequisicionMaterial {
+  id: string;
+  obraId: string;
+  fechaSolicitud: string;
+  fechaEntregaSolicitada: string;
+  periodo?: string;
+  materiales: MaterialRequerido[];
+  status: 'pendiente' | 'aprobada' | 'rechazada' | 'parcial';
+  solicitanteId: string;
+  solicitanteName?: string;
+  totalMateriales?: number;
+}
+
+export interface CalculoMaterial {
+  elemento: string;
+  largo: number;
+  ancho: number;
+  alto?: number;
+  piezas: number;
+  cantidadCalculada: number;
+  desperdicio: number; // ej: 0.10 = 10%
+}
+
+// EQUIPOS
+export interface RentaEquipo {
+  id: string;
+  obraId: string;
+  concepto: string;
+  equipo: string; // Andamios, Bailarinas, etc.
+  fecha: string;
+  horaInicio: string;
+  horaTermino: string;
+  totalHoras: number;
+  totalDias: number;
+  precioPorDia: number;
+  importe: number;
+  descripcionTrabajo: string; // Esto alimenta avance físico
+  proveedor?: string;
+  statusPago: 'pendiente' | 'pagado';
+  semanaReporte?: number;
+}
+
+// DESTAJOS
+export interface EstimacionDestajo {
+  numero: number;
+  fecha: string;
+  presupuestado: { cantidad: number; importe: number; };
+  acumuladoAnterior: { cantidad: number; importe: number; };
+  presenteEjercicio: { cantidad: number; importe: number; };
+  acumuladoTotal: { cantidad: number; importe: number; };
+  porEjecutar: { cantidad: number; importe: number; };
+}
+
+export interface Destajo {
+  id: string;
+  obraId: string;
+  frente: string; // CANCHA SAHUAYO
+  partida: string;
+  concepto: string;
+  costoTotal: number;
+  porcentajeGarantia: number; // 10%
+  garantiaRetenida: number;
+  depositoRealizado: number;
+  estimaciones: EstimacionDestajo[];
+  status: 'en_proceso' | 'pagado' | 'terminado';
+  contratista?: string;
+}
+
+// COMBUSTIBLE (Integrado a Caja Chica pero con estructura propia)
+export interface RecorridoCombustible {
+  dia: 'Lunes' | 'Martes' | 'Miercoles' | 'Jueves' | 'Viernes' | 'Sabado' | 'Domingo';
+  origen: string;
+  destino: string;
+  kmRecorridos: number;
+  rendimiento: number; // km/l
+  litros: number;
+  precioPorLitro: number;
+  importe: number;
+}
+
+export interface RequisicionCombustible {
+  id: string;
+  obraId: string;
+  vehiculo: string; // FRONTIER
+  placas: string; // MW7852D
+  semanaDel: string;
+  semanaAl: string;
+  recorridos: RecorridoCombustible[];
+  totalImporte: number;
+  status: 'pendiente' | 'aprobada';
+}

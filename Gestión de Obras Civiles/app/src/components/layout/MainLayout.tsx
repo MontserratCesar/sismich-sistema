@@ -2,22 +2,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Wallet } from 'lucide-react';
 import {
   HardHat,
   LayoutDashboard,
   Building2,
   Users,
-  FileText,
-  DollarSign,
   Settings,
   LogOut,
   Menu,
   ChevronRight,
   Bell,
   User,
-  Calculator,
-  TrendingUp,
 } from 'lucide-react';
 import type { User as UserType, UserRole } from '@/types';
 
@@ -27,6 +22,8 @@ interface MainLayoutProps {
   children: React.ReactNode;
   currentView: string;
   onViewChange: (view: string) => void;
+  // Opcional: pasar el nombre de la obra seleccionada para mostrarla en el header
+  currentObraName?: string;
 }
 
 interface NavItem {
@@ -37,22 +34,55 @@ interface NavItem {
   badge?: number;
 }
 
+// MENÚ MINIMALISTA: Solo accesos principales
+// Todo lo demás (Nóminas, Caja Chica, Presupuesto, etc.) se accede dentro de ObraWorkspace
 const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'residente', 'contadora'] },
-  { id: 'obras', label: 'Obras', icon: Building2, roles: ['admin', 'residente'] },
-  { id: 'nominas', label: 'Nóminas', icon: DollarSign, roles: ['admin', 'residente', 'contadora'], badge: 0 },
-  { id: 'caja-chica', label: 'Caja Chica', icon: Wallet, roles: ['admin', 'residente'] },
-  { id: 'documentos', label: 'Documentos', icon: FileText, roles: ['admin', 'residente', 'contadora'] },
-  { id: 'usuarios', label: 'Usuarios', icon: Users, roles: ['admin'] },
-  { id: 'configuracion', label: 'Configuración', icon: Settings, roles: ['admin'] },
-  { id: 'presupuesto', label: 'Presupuesto', icon: Calculator, roles: ['admin', 'residente'] },
-  { id: 'avance', label: 'Avance Físico', icon: TrendingUp, roles: ['admin', 'residente'] },
+  { 
+    id: 'dashboard', 
+    label: 'Dashboard', 
+    icon: LayoutDashboard, 
+    roles: ['admin', 'residente', 'contadora'] 
+  },
+  { 
+    id: 'obras', 
+    label: 'Obras', 
+    icon: Building2, 
+    roles: ['admin', 'residente', 'contadora'] // Contadora también puede ver obras (lectura)
+  },
+  { 
+    id: 'usuarios', 
+    label: 'Usuarios', 
+    icon: Users, 
+    roles: ['admin'] 
+  },
+  { 
+    id: 'configuracion', 
+    label: 'Configuración', 
+    icon: Settings, 
+    roles: ['admin'] 
+  },
 ];
 
-export function MainLayout({ user, onLogout, children, currentView, onViewChange }: MainLayoutProps) {
+export function MainLayout({ 
+  user, 
+  onLogout, 
+  children, 
+  currentView, 
+  onViewChange,
+  currentObraName 
+}: MainLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(user.role));
+
+  // Lógica para el título del header
+  const getHeaderTitle = () => {
+    if (currentView === 'obra-workspace' && currentObraName) {
+      return `Obra: ${currentObraName}`;
+    }
+    const item = navItems.find(i => i.id === currentView);
+    return item?.label || 'Dashboard';
+  };
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
@@ -68,7 +98,7 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
           </div>
         </div>
         
-        {/* BOTÓN CERRAR SESIÓN DEBAJO DEL LOGO */}
+        {/* BOTÓN CERRAR SESIÓN */}
         <Button
           variant="outline"
           size="sm"
@@ -95,7 +125,11 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
                   : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700'
               }`}
             >
-              <item.icon className={`w-5 h-5 ${currentView === item.id ? 'text-white' : 'text-gray-400 group-hover:text-amber-600'}`} />
+              <item.icon className={`w-5 h-5 ${
+                currentView === item.id 
+                  ? 'text-white' 
+                  : 'text-gray-400 group-hover:text-amber-600'
+              }`} />
               <span className="font-medium flex-1">{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -108,7 +142,7 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
         </nav>
       </ScrollArea>
 
-      {/* FOOTER SOLO CON INFO DEL USUARIO (SIN LOGOUT) */}
+      {/* FOOTER CON INFO DEL USUARIO */}
       <div className="p-4 border-t border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
@@ -152,9 +186,12 @@ export function MainLayout({ user, onLogout, children, currentView, onViewChange
         <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="lg:hidden w-10" /> {/* Spacer for mobile menu button */}
-            <h2 className="text-xl font-bold text-gray-900 capitalize">
-              {navItems.find(i => i.id === currentView)?.label || 'Dashboard'}
+            
+            {/* Título dinámico */}
+            <h2 className="text-xl font-bold text-gray-900 truncate max-w-md">
+              {getHeaderTitle()}
             </h2>
+            
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5 text-gray-600" />
