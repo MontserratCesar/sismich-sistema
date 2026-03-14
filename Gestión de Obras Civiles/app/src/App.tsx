@@ -178,24 +178,67 @@ function App() {
     toast.success('Nómina autorizada');
   };
 
-  const handlePagarNomina = (id: string) => {
-  const nomina = pagarNomina(id);
-  toast.success('Pago registrado exitosamente');
+  const handlePagarNomina = (id: string, fechaPago?: string, pagadoPor?: string) => {
+  // 1. Obtener la nómina actual
+  const nomina = nominas.find(n => n.id === id);
+  if (!nomina) return;
+
+  // 2. Actualizar la nómina con estado pagado + metadata
+  const updates: Partial<Nomina> = {
+    estado: 'pagada',
+    pagadaAt: fechaPago || new Date().toISOString(),
+    pagoRegistradoPor: pagadoPor || user?.name || 'Sistema',
+  };
   
-  // ACTUALIZAR LA OBRA CON EL NUEVO TOTAL
-  if (nomina) {
-    const nominasDeObra = nominas.filter(n => 
-      n.obraId === nomina.obraId && 
-      (n.estado === 'pagada' || n.estado === 'autorizada')
-    );
-    const totalManoObra = nominasDeObra.reduce((sum, n) => sum + n.totalNomina, 0);
-    
-    // Actualizar la obra con el nuevo total de mano de obra
-    updateObra(nomina.obraId, { 
-      totalManoObra: totalManoObra 
-    });
+  updateNomina(id, updates);
+  
+  toast.success(`Pago de ${nomina.obraName} - Semana ${nomina.numeroSemana} registrado correctamente`);
+
+  // 3. ACTUALIZAR LA OBRA - Acumular gasto de mano de obra
+  if (nomina.obraId) {
+    const obra = obras.find(o => o.id === nomina.obraId);
+    if (obra) {
+      // Calcular nuevo total de mano de obra pagada de esta obra
+      const nominasPagadasDeObra = nominas.filter(n => 
+        n.obraId === obra.id && 
+        (n.estado === 'pagada' || (n.id === id)) // Incluir la actual que acabamos de marcar
+      );
+      
+      const totalManoObraPagada = nominasPagadasDeObra.reduce((sum, n) => {
+        // Si es la nómina actual, tomemos el total actual, si no, el de la nómina
+        const monto = (n.id === id) ? nomina.totalNomina : n.totalNomina;
+        return sum + monto;
+      }, 0);
+      
+      // Calcular gasto total real (mano obra + materiales + equipo)
+      const gastoTotalReal = totalManoObraPagada + 
+        (obra.gastoRealMateriales || 0) + 
+        (obra.gastoRealEquipo || 0);
+      
+      // Calcular avance financiero global
+      const avanceFinanciero = obra.presupuesto?.totalPresupuesto 
+        ? (gastoTotalReal / obra.presupuesto.totalPresupuesto) * 100 
+        : 0;
+
+      // Actualizar la obra
+      updateObra(obra.id, {
+        gastoRealManoObra: totalManoObraPagada,
+        gastoTotalReal: gastoTotalReal,
+        avanceFinancieroGlobal: parseFloat(avanceFinanciero.toFixed(2))
+      });
+      
+      console.log(`Obra ${obra.nombre} actualizada:`, {
+        manoObra: totalManoObraPagada,
+        totalGastado: gastoTotalReal,
+        avanceFinanciero: avanceFinanciero.toFixed(2) + '%'
+      });
+    }
   }
+  
+  // 4. Limpiar selección si es necesario (opcional)
+   setSelectedNomina(null); 
 };
+  
 // Handle para presupuesto
 const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
   if (selectedObra) {

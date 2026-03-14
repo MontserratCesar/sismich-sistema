@@ -113,7 +113,7 @@ export interface Nomina {
   semanaDel: string;
   semanaAl: string;
   fechaElaboracion: string;
-  numeroSemana?: number;  // Campo que faltaba
+  numeroSemana?: number;  
   empleados: NominaEmpleado[];
   totalNomina: number;
   estado: 'pendiente' | 'validada' | 'autorizada' | 'pagada' | 'rechazada';
@@ -125,7 +125,8 @@ export interface Nomina {
   validadaAt?: string;
   autorizadaAt?: string;
   pagadaAt?: string;
-  autorizo?: string;  // Campo que faltaba
+  pagoRegistradoPor?: string;
+  autorizo?: string;  
   elaboro?: string;
   
   createdAt: string;

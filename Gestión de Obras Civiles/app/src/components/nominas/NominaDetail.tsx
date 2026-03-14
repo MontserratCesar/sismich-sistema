@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import {
 import type { Nomina, Obra, User as UserType } from '@/types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { NominaPagoModal } from './NominaPagoModal';
 
 interface NominaDetailProps {
   nomina: Nomina;
@@ -23,7 +24,7 @@ interface NominaDetailProps {
   onBack: () => void;
   onValidar: (id: string) => void;
   onAutorizar: (id: string) => void;
-  onPagar: (id: string) => void;
+  onPagar: (id: string, fechaPago?: string, pagadoPor?: string) => void;
 }
 
 export function NominaDetail({ 
@@ -36,6 +37,7 @@ export function NominaDetail({
   onPagar 
 }: NominaDetailProps) {
   const nominaRef = useRef<HTMLDivElement>(null);
+  const [showPagoModal, setShowPagoModal] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -103,8 +105,11 @@ export function NominaDetail({
               Autorizar
             </Button>
           )}
-          {nomina.estado === 'autorizada' && currentUser.role === 'contadora' && (
-            <Button onClick={() => onPagar(nomina.id)} className="bg-emerald-500 hover:bg-emerald-600">
+          {nomina.estado === 'autorizada' && (currentUser.role === 'contadora' || currentUser.role === 'admin') && (
+            <Button 
+              onClick={() => setShowPagoModal(true)} 
+              className="bg-emerald-500 hover:bg-emerald-600"
+            >
               <DollarSign className="w-4 h-4 mr-2" />
               Registrar Pago
             </Button>
@@ -333,6 +338,17 @@ export function NominaDetail({
           </div>
         </div>
       </div>
+      <NominaPagoModal
+        isOpen={showPagoModal}
+        onClose={() => setShowPagoModal(false)}
+        nomina={nomina}
+        obra={obra}
+        currentUser={currentUser}
+        onConfirm={(id, fecha, por) => {
+    // Pasamos la fecha y quién pagó al handler
+          onPagar(id, fecha, por);
+  }}
+/>
     </div>
   );
 }
