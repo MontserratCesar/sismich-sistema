@@ -91,10 +91,10 @@ export function NominaDetail({
             <Download className="w-4 h-4 mr-2" />
             Exportar PDF
           </Button>
-          {nomina.estado === 'pendiente' && currentUser.id === nomina.residenteId && (
+          {nomina.estado === 'pendiente' && (currentUser.role === 'contadora' || currentUser.role === 'admin') && (
             <Button onClick={() => onValidar(nomina.id)} className="bg-blue-500 hover:bg-blue-600">
               <CheckCircle className="w-4 h-4 mr-2" />
-              Validar
+              Validar Nómina
             </Button>
           )}
           {nomina.estado === 'validada' && currentUser.role === 'admin' && (
