@@ -288,7 +288,27 @@ const handleGuardarAvance = (avance: RegistroAvanceSemanal) => {
     switch (currentView) {
       case 'dashboard':
         if (user.role === 'admin') {
-          return <AdminDashboard obras={obras} nominas={nominas} users={users} />;
+          return ( 
+          <AdminDashboard 
+            obras={obras}
+            nominas={nominas}
+            users={users}
+            onViewObra={(obraId) => {
+              const obra = obras.find(o => o.id === obraId);
+              if (obra) {
+                setSelectedObra(obra);
+                setCurrentView('obra-workspace');
+              }
+            }}
+            onViewNomina={(nominaId) => {
+              const nomina = nominas.find(n => n.id === nominaId);
+              if (nomina) {
+                setSelectedNomina(nomina);
+              }
+            }}
+            />
+          );
+
         } else if (user.role === 'residente') {
           return (
             <ResidenteDashboard
