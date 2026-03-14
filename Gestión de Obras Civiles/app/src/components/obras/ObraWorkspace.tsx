@@ -34,6 +34,7 @@ import { PresupuestoForm } from '@/components/presupuesto/PresupuestoForm';
 import { AvanceSemanalForm } from '@/components/avance/AvanceSemanalForm';
 import { NominaDetail } from '@/components/nominas/NominaDetail';
 import { MaterialesManager } from '@/components/materiales/MaterialesManager';
+import { EquiposManager } from '@/components/equipos/EquiposManager';
 
 interface ObraWorkspaceProps {
   obra: Obra;
@@ -515,20 +516,16 @@ export function ObraWorkspace({
   );
 
       case 'equipos':
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Renta de Equipo</h2>
-              <Button className="bg-purple-600">+ Registrar Renta</Button>
-            </div>
-            
-            <div className="bg-gray-50 p-8 rounded-lg text-center border-2 border-dashed border-gray-300">
-              <Truck className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">Módulo de Renta de Equipo Menor</p>
-              <p className="text-sm text-gray-400 mt-2">Andamios, bailarinas, etc. Integración con Excel "Renta de Equipo"</p>
-            </div>
-          </div>
-        );
+  return (
+    <EquiposManager 
+      obra={obra} 
+      onGuardarEquipo={(eq) => {
+        console.log('Equipo guardado:', eq);
+        toast.success('Renta registrada. Se vinculará al avance físico.');
+        // Aquí conectarás con tu backend: createEquipo(eq)
+      }}
+    />
+  );
 
       case 'destajos':
         return (

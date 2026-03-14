@@ -161,20 +161,15 @@ export function ContadoraDashboard({
                           ${nomina.totalNomina.toLocaleString('es-MX')}
                         </p>
                         <div className="flex gap-2 mt-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => onViewNomina(nomina.id)}
-                          >
-                            Ver Detalle
-                          </Button>
-                          <Button 
+                          <Button
                             size="sm"
                             className="bg-blue-600 hover:bg-blue-700"
-                            onClick={() => onValidarNomina?.(nomina.id)}
+                            onClick={() => onViewNomina(nomina.id)}
                           >
-                            Validar
+                            Revisar Detalle
+                            <ArrowRight className="w-4 h-4 ml-1" /> 
                           </Button>
+                          
                         </div>
                       </div>
                     </div>
