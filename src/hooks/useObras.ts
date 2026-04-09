@@ -16,7 +16,8 @@ import type { Obra, ConceptoPresupuesto, RegistroAvanceSemanal, TipoConcepto } f
 
 // Función para recalcular todo el presupuesto (igual que tenías)
 const calcularPresupuesto = (conceptos: ConceptoPresupuesto[]) => {
-  const conceptosCalculados = conceptos.map(c => {
+  const safeConceptos = conceptos || [];
+  const conceptosCalculados = safeConceptos.map(c => {
     const porcentajeFinal = c.porcentajeAvanceAjustado !== undefined 
       ? c.porcentajeAvanceAjustado 
       : c.porcentajeAvanceCalculado;

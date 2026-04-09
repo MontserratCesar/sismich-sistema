@@ -28,7 +28,7 @@ import { ObraWorkspace } from '@/components/obras/ObraWorkspace';
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
   const { users, createUser, updateUser, deleteUser, resetPassword } = useUsers();
-  const { obras, loading: obrasLoading, createObra, registrarAvanceSemanal, actualizarGastoReal, getObraById, deleteObra } = useObras();
+  const { obras, loading: obrasLoading, createObra, updateObra, registrarAvanceSemanal, actualizarGastoReal, getObraById, deleteObra } = useObras();
   const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina, getNominasByObra, getTotalPagadoByObra } = useNominas();
   
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
