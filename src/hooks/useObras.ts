@@ -109,7 +109,7 @@ export function useObras() {
       const now = new Date().toISOString();
       
       // Convertir conceptos iniciales al formato completo
-      const conceptosCompletos: ConceptoPresupuesto[] = obraData.conceptos.map(c => ({
+      const conceptosCompletos: ConceptoPresupuesto[] = (obraData.conceptos || []).map(c => ({
         ...c,
         id: `concepto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         importe: c.cantidad * c.costoUnitario,
