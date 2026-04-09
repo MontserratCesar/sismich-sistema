@@ -372,10 +372,26 @@ export function useObras() {
     }
   }, [obras]);
 
+  const updateObra = useCallback(async (obraId: string, updates: Partial<Obra>): Promise<void> => {
+  try {
+    const obraRef = doc(db, "obras", obraId);
+    await updateDoc(obraRef, {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    });
+    setObras(prev => prev.map(o => o.id === obraId ? { ...o, ...updates } : o));
+    console.log("✅ Obra actualizada en Firebase");
+  } catch (error) {
+    console.error("❌ Error actualizando obra:", error);
+    throw error;
+  }
+}, []);
+
   return {
     obras,
     loading, // Nuevo: para saber si está cargando
     createObra,
+    updateObra,
     registrarAvanceSemanal,
     actualizarGastoReal,
     getEstadisticasDashboard,

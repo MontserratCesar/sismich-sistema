@@ -28,7 +28,7 @@ import { ObraWorkspace } from '@/components/obras/ObraWorkspace';
 function App() {
   const { user, isAuthenticated, login, logout } = useAuth();
   const { users, createUser, updateUser, deleteUser, resetPassword } = useUsers();
-  const { obras, createObra, updateObra, deleteObra, agregarAvanceSemanal } = useObras();
+  const { obras, loading: obrasLoading, createObra, registrarAvanceSemanal, actualizarGastoReal, getObraById, deleteObra } = useObras();
   const { nominas, createNomina, updateNomina, deleteNomina, validarNomina, autorizarNomina, pagarNomina, getNominasByObra, getTotalPagadoByObra } = useNominas();
   
   const { documentos, uploadDocumento, deleteDocumento } = useDocumentos();
@@ -84,10 +84,24 @@ function App() {
   };
 
   // Obra handlers
-  const handleCreateObra = (obraData: Parameters<typeof createObra>[0]) => {
-    createObra(obraData);
+  const handleCreateObra = async (obraData: Omit<Obra, 'id' | 'createdAt' | 'updatedAt'>) => {
+  try {
+    await createObra({
+      nombre: obraData.nombre,
+      ubicacion: obraData.ubicacion,
+      ambito: obraData.ambito,
+      fechaInicio: obraData.fechaInicio,
+      fechaTermino: obraData.fechaTermino,
+      tipoRecurso: obraData.tipoRecurso,
+      residenteId: obraData.residenteId,
+      residenteName: obraData.residenteName,
+      conceptos: obraData.presupuesto?.conceptos || [],
+    });
     toast.success('Obra creada exitosamente');
-  };
+  } catch (error) {
+    toast.error('Error al crear la obra');
+  }
+};
 
   const handleUpdateObra = (id: string, updates: Parameters<typeof updateObra>[1]) => {
     updateObra(id, updates);
@@ -253,7 +267,18 @@ const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
 
 const handleGuardarAvance = (avance: RegistroAvanceSemanal) => {
   if (selectedObra) {
-    agregarAvanceSemanal(selectedObra.id, avance);
+    registrarAvanceSemanal(
+      selectedObra.id,
+      avance.id || '',
+      {
+        semanaDel: avance.semanaDel || '',
+        semanaAl: avance.semanaAl || '',
+        numeroSemana: avance.numeroSemana || 1,
+        cantidadEjecutada: avance.cantidadEjecutada || 0,
+        notas: avance.notas,
+      },
+      user?.name || 'Sistema'
+    );
     toast.success(`Avance semana ${avance.semana} guardado`);
     setShowAvanceForm(false);
   }
