@@ -135,10 +135,10 @@ export function useObras() {
 
       const docRef = await addDoc(collection(db, "obras"), newObraData);
 
-      const newObra: Obra = {
+      const newObra = {
         id: docRef.id,
         ...newObraData,
-      };
+      } as Obra;
 
       setObras(prev => [...prev, newObra]);
       console.log("✅ Obra creada en Firebase con ID:", docRef.id);
