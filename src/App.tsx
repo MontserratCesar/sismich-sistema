@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { UsuariosManager } from '@/components/usuarios/UsuariosManager';  // <UsuariosManager ... />
 import { PresupuestoForm } from '@/components/presupuesto/PresupuestoForm';
-import type { User, Obra, Nomina, NominaEmpleado, UserRole, CajaChica, GastoCajaChica, PresupuestoObra, RegistroAvanceSemanal } from '@/types';
+import type { User, Obra, Nomina, NominaEmpleado, UserRole, CajaChica, GastoCajaChica, PresupuestoObra, RegistroAvanceSemanal, TipoPresupuesto, VersionPresupuesto } from '@/types';
 import { AvanceSemanalForm } from '@/components/avance/AvanceSemanalForm';
 import { ObraWorkspace } from '@/components/obras/ObraWorkspace';
 
@@ -85,23 +85,22 @@ function App() {
 
   // Obra handlers
   const handleCreateObra = async (obraData: Omit<Obra, 'id' | 'createdAt' | 'updatedAt'>) => {
-  try {
-    await createObra({
-      nombre: obraData.nombre,
-      ubicacion: obraData.ubicacion,
-      ambito: obraData.ambito,
-      fechaInicio: obraData.fechaInicio,
-      fechaTermino: obraData.fechaTermino,
-      tipoRecurso: obraData.tipoRecurso,
-      residenteId: obraData.residenteId,
-      residenteName: obraData.residenteName,
-      conceptos: obraData.presupuesto?.conceptos || [],
-    });
-    toast.success('Obra creada exitosamente');
-  } catch (error) {
-    toast.error('Error al crear la obra');
-  }
-};
+    try {
+      await createObra({
+        nombre: obraData.nombre,
+        ubicacion: obraData.ubicacion,
+        ambito: obraData.ambito,
+        fechaInicio: obraData.fechaInicio,
+        fechaTermino: obraData.fechaTermino,
+        tipoRecurso: obraData.tipoRecurso,
+        residenteId: obraData.residenteId,
+        residenteName: obraData.residenteName,
+      });
+      toast.success('Obra creada exitosamente');
+    } catch (error) {
+      toast.error('Error al crear la obra');
+    }
+  };
 
   const handleUpdateObra = (id: string, updates: Parameters<typeof updateObra>[1]) => {
     updateObra(id, updates);
@@ -253,15 +252,15 @@ function App() {
    setSelectedNomina(null); 
 };
   
-// Handle para presupuesto
-const handleSavePresupuesto = (presupuesto: PresupuestoObra) => {
+// Handle para presupuesto (nueva firma: tipo + versión)
+const handleSavePresupuesto = (tipo: TipoPresupuesto, version: VersionPresupuesto) => {
   if (selectedObra) {
-    updateObra(selectedObra.id, { 
-      presupuesto,
-      presupuestoTotal: presupuesto.totalPresupuesto 
-    });
-    toast.success('Presupuesto guardado exitosamente');
-    setShowPresupuestoForm(false);
+    const presupuestosActuales = selectedObra.presupuestos || {};
+    const newPresupuestos = { ...presupuestosActuales, [tipo]: version };
+    updateObra(selectedObra.id, { presupuestos: newPresupuestos });
+    // Actualizar selectedObra para que ObraWorkspace refleje el cambio inmediatamente
+    setSelectedObra(prev => prev ? { ...prev, presupuestos: newPresupuestos } : null);
+    toast.success(`Presupuesto ${tipo} guardado exitosamente`);
   }
 };
 

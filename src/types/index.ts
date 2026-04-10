@@ -66,14 +66,20 @@ export interface Obra {
   residenteName?: string;
   estado: EstadoObra;
   semanaActualReporte?: number;
-  
-  
-  // ✅ CAMBIO: Ahora presupuesto es el objeto
+
+  // Presupuesto legacy (backward compat con datos existentes en Firebase)
   presupuesto: PresupuestoObra;
-  presupuestoTotal?: number;  // Opcional, por si necesitas el total como número separado
-  registrosAvance?: RegistroAvanceSemanal[]; 
-  
-  // ... resto de campos (totalManoObra, gastoRealMateriales, etc.)
+  presupuestoTotal?: number;
+  registrosAvance?: RegistroAvanceSemanal[];
+
+  // Nuevo módulo de presupuesto (3 versiones + estimaciones)
+  presupuestos?: {
+    presentado?: VersionPresupuesto;
+    contrato?: VersionPresupuesto;
+    ejecutado?: VersionPresupuesto;
+  };
+  estimaciones?: Estimacion[];
+
   totalManoObra?: number;
   totalMateriales?: number;
   gastoRealMateriales?: number;
@@ -82,12 +88,12 @@ export interface Obra {
   gastoTotalReal?: number;
   avanceFisicoGlobal?: number;
   avanceFinancieroGlobal?: number;
-  
+
   partidas?: any[];
   nominasIds?: string[];
   requisicionesIds?: string[];
   destajosIds?: string[];
-  
+
   createdAt: string;
   updatedAt: string;
 }
@@ -323,4 +329,59 @@ export interface RequisicionCombustible {
   recorridos: RecorridoCombustible[];
   totalImporte: number;
   status: 'pendiente' | 'aprobada';
+}
+
+// ─── MÓDULO DE PRESUPUESTO — 3 VERSIONES ─────────────────────────────────────
+
+export type TipoPresupuesto = 'presentado' | 'contrato' | 'ejecutado';
+
+export interface ConceptoVersion {
+  id: string;
+  clave: string;
+  partida: string;
+  concepto: string;
+  unidad: string;
+  precioUnitario: number; // editable por obra (puede diferir del catálogo)
+  cantidad: number;
+  importe: number;        // cantidad × precioUnitario (calculado)
+}
+
+export interface VersionPresupuesto {
+  tipo: TipoPresupuesto;
+  conceptos: ConceptoVersion[];
+  subtotal: number;
+  iva: number;   // subtotal × 0.16
+  total: number; // subtotal + iva
+  updatedAt?: string;
+}
+
+// ─── ESTIMACIONES (cortes de avance) ─────────────────────────────────────────
+
+export interface ConceptoEstimacion {
+  conceptoId: string;
+  clave: string;
+  concepto: string;
+  unidad: string;
+  cantidadContrato: number;
+  precioUnitario: number;
+  cantidadAnterior: number;
+  cantidadEstePeriodo: number;
+  cantidadAcumulada: number;
+  importeEstePeriodo: number;
+  importeAcumulado: number;
+}
+
+export interface Estimacion {
+  id: string;
+  obraId: string;
+  numero: number;
+  fechaInicio: string;
+  fechaFin: string;
+  conceptos: ConceptoEstimacion[];
+  subtotal: number;
+  iva: number;
+  total: number;
+  estado: 'borrador' | 'enviada' | 'aprobada' | 'pagada';
+  createdAt: string;
+  updatedAt: string;
 }

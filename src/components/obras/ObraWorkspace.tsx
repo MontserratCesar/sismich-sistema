@@ -15,16 +15,18 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster, toast } from 'sonner';
-import type { 
-  Obra, 
-  Nomina, 
-  CajaChica, 
-  User, 
+import type {
+  Obra,
+  Nomina,
+  CajaChica,
+  User,
   DocumentoObra,
   RequisicionMaterial,
   RentaEquipo,
   Destajo,
-  RequisicionCombustible 
+  RequisicionCombustible,
+  TipoPresupuesto,
+  VersionPresupuesto,
 } from '@/types';
 
 // Import de tus componentes existentes (ajusta rutas según tu estructura)
@@ -52,7 +54,7 @@ interface ObraWorkspaceProps {
   // Props de handlers (los que ya tienes en App.tsx)
   onSaveNomina: (data: any) => void;
   onSaveCajaChica: (data: any) => void;
-  onSavePresupuesto: (presupuesto: any) => void;
+  onSavePresupuesto: (tipo: TipoPresupuesto, version: VersionPresupuesto) => void;
   onGuardarAvance: (avance: any) => void;
   onCambiarEstadoNomina?: (id: string, estado: Nomina['estado']) => void;
   
@@ -96,7 +98,9 @@ export function ObraWorkspace({
   
   // Filtrar nóminas de esta obra
   const nominasDeObra = nominas.filter(n => n.obraId === obra.id);
-  const tienePresupuesto = obra.presupuesto && obra.presupuesto.totalPresupuesto > 0;
+  const tienePresupuesto =
+    (obra.presupuesto && obra.presupuesto.totalPresupuesto > 0) ||
+    !!(obra.presupuestos && Object.values(obra.presupuestos).some(Boolean));
 
   const tabs: TabConfig[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'contadora', 'residente'] },
@@ -241,82 +245,144 @@ export function ObraWorkspace({
           </div>
         );
 
-      case 'presupuesto':
-        if (showPresupuestoForm || !tienePresupuesto) {
+      case 'presupuesto': {
+        const fmtMXN = (n: number) =>
+          n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 });
+
+        if (showPresupuestoForm) {
           return (
             <PresupuestoForm
               obraId={obra.id}
               obraName={obra.nombre}
-              presupuestoExistente={tienePresupuesto ? obra.presupuesto : undefined}
-              onSave={(presupuesto) => {
-                onSavePresupuesto(presupuesto);
+              presupuestosExistentes={obra.presupuestos}
+              onSave={(tipo, version) => {
+                onSavePresupuesto(tipo, version);
                 setShowPresupuestoForm(false);
               }}
               onCancel={() => setShowPresupuestoForm(false)}
             />
           );
         }
+
+        const versionesInfo: { tipo: TipoPresupuesto; label: string; bgActive: string; textActive: string; textLabel: string }[] = [
+          { tipo: 'presentado', label: 'Presentado', bgActive: 'bg-blue-50 border-blue-300',   textActive: 'text-blue-900',   textLabel: 'text-blue-600' },
+          { tipo: 'contrato',   label: 'Contrato',   bgActive: 'bg-green-50 border-green-300', textActive: 'text-green-900',  textLabel: 'text-green-600' },
+          { tipo: 'ejecutado',  label: 'Ejecutado',  bgActive: 'bg-orange-50 border-orange-300', textActive: 'text-orange-900', textLabel: 'text-orange-600' },
+        ];
+
+        const versionParaTabla =
+          obra.presupuestos?.contrato ||
+          obra.presupuestos?.presentado ||
+          obra.presupuestos?.ejecutado;
+
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Presupuesto de Obra</h2>
               <Button onClick={() => setShowPresupuestoForm(true)} variant="outline">
-                Editar Presupuesto
+                {tienePresupuesto ? 'Editar Presupuesto' : 'Crear Presupuesto'}
               </Button>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Materiales</p>
-                <p className="text-xl font-bold">${obra.presupuesto?.sumaMateriales?.toLocaleString() || 0}</p>
-              </div>
-              <div className="bg-orange-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Mano de Obra</p>
-                <p className="text-xl font-bold">${obra.presupuesto?.sumaManoObra?.toLocaleString() || 0}</p>
-              </div>
-              <div className="bg-purple-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Equipo</p>
-                <p className="text-xl font-bold">${obra.presupuesto?.sumaEquipo?.toLocaleString() || 0}</p>
-              </div>
-              <div className="bg-gray-900 text-white p-4 rounded">
-                <p className="text-sm text-gray-300">Total</p>
-                <p className="text-2xl font-bold">${obra.presupuesto?.totalPresupuesto?.toLocaleString() || 0}</p>
-              </div>
+
+            {/* Tarjetas de las 3 versiones */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {versionesInfo.map(({ tipo, label, bgActive, textActive, textLabel }) => {
+                const v = obra.presupuestos?.[tipo];
+                return (
+                  <div
+                    key={tipo}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      v ? bgActive : 'border-dashed border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <p className={`text-sm font-bold ${v ? textLabel : 'text-gray-400'}`}>{label}</p>
+                    {v ? (
+                      <>
+                        <p className={`text-2xl font-bold mt-1 ${textActive}`}>{fmtMXN(v.total)}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {v.conceptos.length} conceptos · IVA incluido
+                        </p>
+                        {v.updatedAt && (
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {new Date(v.updatedAt).toLocaleDateString('es-MX')}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-400 mt-2">Sin datos</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Detalle de conceptos */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Concepto</th>
-                    <th className="px-4 py-2 text-right">Cantidad</th>
-                    <th className="px-4 py-2 text-right">Unitario</th>
-                    <th className="px-4 py-2 text-right">Importe</th>
-                    <th className="px-4 py-2 text-center">Avance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {obra.presupuesto?.conceptos?.map((concepto, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="px-4 py-2">{concepto.concepto}</td>
-                      <td className="px-4 py-2 text-right">{concepto.cantidad} {concepto.unidad}</td>
-                      <td className="px-4 py-2 text-right">${concepto.costoUnitario}</td>
-                      <td className="px-4 py-2 text-right">${concepto.importe?.toLocaleString()}</td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          (concepto.avancePorcentaje || 0) >= 100 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {concepto.avancePorcentaje || 0}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* Tabla de conceptos de la versión más relevante */}
+            {versionParaTabla && versionParaTabla.conceptos.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 text-sm mb-2">
+                  Conceptos —{' '}
+                  {versionParaTabla.tipo.charAt(0).toUpperCase() + versionParaTabla.tipo.slice(1)}
+                </h3>
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 w-24">Clave</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500">Concepto</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 w-20">Unidad</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-500 w-28">P.U.</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-500 w-20">Cant.</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-500 w-32">Importe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {versionParaTabla.conceptos.map((c, idx) => (
+                        <tr key={c.id || idx} className="border-t hover:bg-gray-50">
+                          <td className="px-3 py-2 font-mono text-xs text-gray-500">{c.clave}</td>
+                          <td className="px-3 py-2 text-xs">{c.concepto}</td>
+                          <td className="px-3 py-2 text-center text-xs">{c.unidad}</td>
+                          <td className="px-3 py-2 text-right text-xs">
+                            {c.precioUnitario.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-3 py-2 text-right text-xs">{c.cantidad}</td>
+                          <td className="px-3 py-2 text-right text-xs font-semibold">
+                            {c.importe.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-gray-50 border-t-2">
+                      <tr>
+                        <td colSpan={5} className="px-3 py-2 text-xs font-semibold text-right text-gray-600">Subtotal:</td>
+                        <td className="px-3 py-2 text-right text-xs font-semibold">{fmtMXN(versionParaTabla.subtotal)}</td>
+                      </tr>
+                      <tr>
+                        <td colSpan={5} className="px-3 py-2 text-xs text-right text-gray-500">IVA 16%:</td>
+                        <td className="px-3 py-2 text-right text-xs">{fmtMXN(versionParaTabla.iva)}</td>
+                      </tr>
+                      <tr className="bg-gray-900 text-white">
+                        <td colSpan={5} className="px-3 py-2 text-sm font-bold text-right">TOTAL:</td>
+                        <td className="px-3 py-2 text-right text-sm font-bold">{fmtMXN(versionParaTabla.total)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {!tienePresupuesto && (
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-14 text-center">
+                <Calculator className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 font-medium">Sin presupuesto registrado</p>
+                <p className="text-sm text-gray-400 mt-1">Crea el presupuesto presentado, de contrato o el ejecutado.</p>
+                <Button onClick={() => setShowPresupuestoForm(true)} className="mt-4">
+                  Crear Presupuesto
+                </Button>
+              </div>
+            )}
           </div>
         );
+      }
 
       case 'nominas':
         if (selectedNomina) {

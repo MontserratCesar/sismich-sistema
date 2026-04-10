@@ -12,7 +12,7 @@ import {
   serverTimestamp,
   Timestamp 
 } from 'firebase/firestore';
-import type { Obra, ConceptoPresupuesto, RegistroAvanceSemanal, TipoConcepto } from '@/types';
+import type { Obra, ConceptoPresupuesto, PresupuestoObra, RegistroAvanceSemanal, TipoConcepto } from '@/types';
 
 // Función para recalcular todo el presupuesto (igual que tenías)
 const calcularPresupuesto = (conceptos: ConceptoPresupuesto[]) => {
@@ -86,7 +86,7 @@ export function useObras() {
     cargarObras();
   }, []);
 
-  // Crear obra con presupuesto detallado
+  // Crear obra — presupuesto vacío, se llena después desde el módulo de presupuesto
   const createObra = useCallback(async (obraData: {
     nombre: string;
     ubicacion: string;
@@ -96,32 +96,18 @@ export function useObras() {
     tipoRecurso: string;
     residenteId: string;
     residenteName?: string;
-    conceptos: Array<{
-      num: number;
-      concepto: string;
-      cantidad: number;
-      unidad: string;
-      costoUnitario: number;
-      tipo: TipoConcepto;
-      metodoCalculo: 'cantidad' | 'porcentaje_directo';
-    }>;
   }): Promise<Obra> => {
     try {
       const now = new Date().toISOString();
-      
-      // Convertir conceptos iniciales al formato completo
-      const conceptosCompletos: ConceptoPresupuesto[] = (obraData.conceptos || []).map(c => ({
-        ...c,
-        id: `concepto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        importe: c.cantidad * c.costoUnitario,
-        registrosSemanales: [],
-        cantidadAcumuladaEjecutada: 0,
-        porcentajeAvanceCalculado: 0,
-        porcentajeAvanceFinal: 0,
-        gastoReal: 0
-      }));
 
-      const presupuesto = calcularPresupuesto(conceptosCompletos);
+      const emptyPresupuesto: PresupuestoObra = {
+        conceptos: [],
+        sumaMateriales: 0,
+        sumaManoObra: 0,
+        costoDirecto: 0,
+        indirectos: 0,
+        totalPresupuesto: 0,
+      };
 
       const newObraData = {
         nombre: obraData.nombre,
@@ -131,9 +117,11 @@ export function useObras() {
         fechaTermino: obraData.fechaTermino,
         tipoRecurso: obraData.tipoRecurso,
         residenteId: obraData.residenteId,
-        residenteName: obraData.residenteName,
+        residenteName: obraData.residenteName || '',
         estado: 'activa',
-        presupuesto,
+        presupuesto: emptyPresupuesto,
+        presupuestos: {},
+        estimaciones: [],
         gastoRealMateriales: 0,
         gastoRealManoObra: 0,
         gastoRealEquipo: 0,
@@ -142,21 +130,20 @@ export function useObras() {
         avanceFinancieroGlobal: 0,
         semanaActualReporte: 1,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       };
 
-      // Guardar en Firebase
       const docRef = await addDoc(collection(db, "obras"), newObraData);
-      
+
       const newObra: Obra = {
         id: docRef.id,
-        ...newObraData
+        ...newObraData,
       };
 
       setObras(prev => [...prev, newObra]);
       console.log("✅ Obra creada en Firebase con ID:", docRef.id);
       return newObra;
-      
+
     } catch (error) {
       console.error("❌ Error creando obra:", error);
       throw error;
@@ -196,7 +183,7 @@ export function useObras() {
       const obra = obras.find(o => o.id === obraId);
       if (!obra) return null;
 
-      const concepto = obra.presupuesto.conceptos.find(c => c.id === conceptoId);
+      const concepto = (obra.presupuesto?.conceptos || []).find(c => c.id === conceptoId);
       if (!concepto) return null;
 
       // Calcular porcentajes automáticos (REGLA DE TRES)
@@ -220,7 +207,7 @@ export function useObras() {
       };
 
       // Actualizar conceptos
-      const conceptosActualizados = obra.presupuesto.conceptos.map(c => {
+      const conceptosActualizados = (obra.presupuesto?.conceptos || []).map(c => {
         if (c.id === conceptoId) {
           const nuevoPorcentajeCalculado = Math.min(porcentajeAcumulado, 100);
           return {
